@@ -97,7 +97,7 @@ describe("permission enforcement in the tool-use loop (R-6)", () => {
     expect(tier).toBe(PermissionTier.FinancialOrIrreversible);
   });
 
-  it("refuses a Tier 2/3 tool call before it reaches the skill, and logs it as denied", async () => {
+  it("refuses a Tier 2/3 tool call before it reaches the skill (no confirmation provider = denied), and logs it as denied", async () => {
     await registerDangerousSkill();
 
     const { handleUserMessage, createSessionId } = await import("../core/agent");
@@ -115,13 +115,15 @@ describe("permission enforcement in the tool-use loop (R-6)", () => {
       usage: usage(),
     });
 
-    // ...and after seeing the refusal as a tool_result, gives up gracefully.
+    // ...and after seeing the cancellation as a tool_result, gives up gracefully.
     createMock.mockResolvedValueOnce({
       content: [{ type: "text", text: "I can't do that without your confirmation." }],
       usage: usage(),
     });
 
     const sessionId = createSessionId();
+    // No confirmation provider injected -> defaults to deny-all (R-1/R-2: never
+    // auto-approve without an explicit human decision).
     const response = await handleUserMessage(sessionId, "Please delete everything");
 
     expect(response.stub).toBe(false);
@@ -130,7 +132,7 @@ describe("permission enforcement in the tool-use loop (R-6)", () => {
     // The skill's actual tool handler must never have been invoked.
     expect(dangerousToolHandler).not.toHaveBeenCalled();
 
-    // The refusal must be logged as a "denied" Tier 3 activity entry.
+    // The cancellation must be logged as a "denied" Tier 3 activity entry.
     const activity = listRecentActivity(10);
     const denied = activity.find((entry) => entry.tool === DANGEROUS_TOOL_NAME);
     expect(denied).toBeDefined();
@@ -139,13 +141,13 @@ describe("permission enforcement in the tool-use loop (R-6)", () => {
     expect(denied?.outcome).toBe("denied");
 
     // The tool_result fed back to the model on the second call must contain
-    // the refusal text and be marked as an error.
+    // the cancellation text and be marked as an error.
     const secondCallArgs = createMock.mock.calls[1][0];
     const lastMessage = secondCallArgs.messages[secondCallArgs.messages.length - 1];
     expect(lastMessage.role).toBe("user");
     expect(lastMessage.content[0]).toMatchObject({ type: "tool_result", is_error: true });
-    expect(lastMessage.content[0].content).toMatch(/can't run/i);
-    expect(lastMessage.content[0].content).toMatch(/Phase 2/);
+    expect(lastMessage.content[0].content).toMatch(/cancelled/i);
+    expect(lastMessage.content[0].content).toMatch(/not run/i);
   });
 
   it("allows a Tier 0 (read-only) tool call to execute and logs it as a success", async () => {

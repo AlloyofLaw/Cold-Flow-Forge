@@ -6,9 +6,10 @@
 // a small status panel (voice adapter, Brain model, cost meter).
 // ---------------------------------------------------------------------------
 
-import type { JarvisBridge, JarvisStatus } from "../app/preload";
+import type { ConfirmationRequestEvent, JarvisBridge, JarvisStatus } from "../app/preload";
 import type { ConversationMessage } from "../store/conversations";
 import type { ActivityLogEntry } from "../store/activityLog";
+import { tierLabel } from "../core/permissions";
 
 declare global {
   interface Window {
@@ -139,8 +140,50 @@ function setupForm(): void {
   });
 }
 
+/**
+ * Wire the Confirm/Cancel modal (R-2, FR-2.5): every pending confirmation
+ * request from the main process (a Tier 1+ tool call that needs the user's
+ * decision before it runs - see app/main.ts ElectronConfirmationProvider) is
+ * shown here with its plain-language description and tier, and the user's
+ * click is sent back via `sendConfirmationDecision`.
+ */
+function setupConfirmationPrompt(): void {
+  const overlay = byId<HTMLElement>("confirmation-overlay");
+  const tierEl = byId<HTMLElement>("confirmation-tier");
+  const descriptionEl = byId<HTMLElement>("confirmation-description");
+  const confirmButton = byId<HTMLButtonElement>("confirmation-confirm");
+  const cancelButton = byId<HTMLButtonElement>("confirmation-cancel");
+
+  let activeRequestId: string | undefined;
+
+  function show(event: ConfirmationRequestEvent): void {
+    activeRequestId = event.id;
+    tierEl.textContent = `Tier ${event.request.tier} - ${tierLabel(event.request.tier)}`;
+    descriptionEl.textContent = event.request.description;
+    overlay.hidden = false;
+  }
+
+  function hide(): void {
+    activeRequestId = undefined;
+    overlay.hidden = true;
+  }
+
+  function respond(decision: "approved" | "denied"): void {
+    if (!activeRequestId) return;
+    window.jarvis.sendConfirmationDecision(activeRequestId, decision);
+    hide();
+    void Promise.all([refreshActivityLog(), refreshStatus()]);
+  }
+
+  confirmButton.addEventListener("click", () => respond("approved"));
+  cancelButton.addEventListener("click", () => respond("denied"));
+
+  window.jarvis.onConfirmationRequest(show);
+}
+
 async function init(): Promise<void> {
   setupForm();
+  setupConfirmationPrompt();
   await Promise.all([loadHistory(), refreshActivityLog(), refreshStatus()]);
 }
 

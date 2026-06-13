@@ -50,7 +50,7 @@ export async function registerGoogleCalendarSkill(): Promise<SkillDescriptor> {
 
   const descriptor: SkillDescriptor = {
     id: GOOGLE_CALENDAR_SKILL_ID,
-    name: "Google Calendar (read-only)",
+    name: "Google Calendar (read + write events)",
     mcpServerRef: "in-process:skills/google-calendar/server.ts",
     status: "connected",
     client,

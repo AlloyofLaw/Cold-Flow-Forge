@@ -64,6 +64,18 @@
       </main>
     </div>
 
+    <div class="modal-overlay" id="confirmation-overlay" hidden>
+      <div class="modal confirmation-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmation-title">
+        <h2 id="confirmation-title">JARVIS needs your confirmation</h2>
+        <p class="confirmation-tier" id="confirmation-tier"></p>
+        <p class="confirmation-description" id="confirmation-description"></p>
+        <div class="confirmation-actions">
+          <button type="button" class="btn-cancel" id="confirmation-cancel">Cancel</button>
+          <button type="button" class="btn-confirm" id="confirmation-confirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+
     <script src="renderer.js"></script>
   </body>
 </html>

@@ -9,12 +9,16 @@
 //   2. Collect the tools advertised by every connected skill and expose them
 //      to the Brain (FR-2.3's tool-use loop).
 //   3. When the Brain calls a tool, classify it into a permission tier
-//      (R-6: enforced here, BEFORE the call reaches the skill) and either
-//      execute it via the skill's MCP client, or refuse it if its tier
-//      requires a confirmation flow that doesn't exist yet (Tier 2/3 -
-//      see core/permissions.ts's `refuseUnconfirmableTier`).
-//   4. Record every tool call - and the overall chat turn - to the activity
-//      log (FR-2.6), and the model call's cost to the cost ledger (FR-2.8).
+//      (R-6: enforced here, BEFORE the call reaches the skill, with
+//      argument-aware classifiers - CLASSIFIER_HOOKS). R-4: if Pause/Do-
+//      Nothing mode is active, any write tool (Tier 1+) is refused outright.
+//      Otherwise, if the tier requires confirmation (Tier 2/3, or an opted-in
+//      Tier 1), the loop pauses, builds a plain-language description (R-2),
+//      and awaits a confirm/cancel decision from the injected
+//      `ConfirmationProvider` before executing - or aborts on cancel.
+//   4. Record every tool call (including confirmation decisions) - and the
+//      overall chat turn - to the activity log (FR-2.6), and the model
+//      call's cost to the cost ledger (FR-2.8).
 //   5. Record the Brain's final reply and return it.
 //
 // This loop is generic: it does not know about "calendar" specifically. Any
@@ -24,16 +28,43 @@
 
 import { randomUUID } from "node:crypto";
 import { think, type BrainTool, type ConversationTurn, type ToolExecutionResult } from "./brain";
-import { classifyTool, refuseUnconfirmableTier, TIER_ASSIGNMENTS, PermissionTier } from "./permissions";
+import {
+  classifyTool,
+  describeToolCall,
+  isPauseModeActive,
+  pauseModeRefusal,
+  requiresConfirmation,
+  shouldProceedAfterConfirmation,
+  CLASSIFIER_HOOKS,
+  TIER_ASSIGNMENTS,
+  PermissionTier,
+  type ConfirmationDecision,
+  type ConfirmationProvider,
+} from "./permissions";
 import { skillRegistry } from "../skills/registry";
 import { recordMessage, getSessionMessages } from "../store/conversations";
 import { recordActivity, type ActivityOutcome } from "../store/activityLog";
+import { getSetting } from "../store/settings";
 
 export interface AgentResponse {
   sessionId: string;
   reply: string;
   stub: boolean;
 }
+
+/**
+ * Default confirmation provider used when none is injected: refuses (treats
+ * as "denied") rather than silently auto-approving. This mirrors the Phase 1
+ * `refuseUnconfirmableTier` behavior for any tier-2/3 (or confirmation-
+ * requiring tier-1) tool call when no real provider (Electron UI / test
+ * fake) is wired up - safer than the alternative of hanging forever or
+ * proceeding unconfirmed (R-1, R-2).
+ */
+const DENY_ALL_CONFIRMATION_PROVIDER: ConfirmationProvider = {
+  async requestConfirmation() {
+    return "denied";
+  },
+};
 
 /** Generate a fresh session id for a new conversation. */
 export function createSessionId(): string {
@@ -109,14 +140,22 @@ function toToolExecutionResult(raw: unknown): ToolExecutionResult {
  * Build the `executeTool` callback passed to `think()`. Every call is:
  *   1. Mapped back to {skill, tool} (R-6 enforcement happens per-call, not
  *      per-tool-list, so it can't be bypassed by the model renaming things).
- *   2. Classified into a permission tier via TIER_ASSIGNMENTS.
- *   3. Refused with a clear message if that tier requires confirmation and
- *      no confirmation flow exists yet (Tier 2/3 in Phase 1 -
- *      see core/permissions.ts `refuseUnconfirmableTier`).
- *   4. Otherwise dispatched to the skill's MCP client and recorded to the
+ *   2. Classified into a permission tier via TIER_ASSIGNMENTS and
+ *      CLASSIFIER_HOOKS (argument-aware tiering, e.g. calendar create/update
+ *      with vs. without attendees - FR-3.3/3.4).
+ *   3. R-4: if Pause/Do-Nothing mode is active, ANY write tool (Tier 1+) is
+ *      refused regardless of confirmation, before any confirmation prompt is
+ *      shown.
+ *   4. If the tier requires confirmation (Tier 2/3, or a Tier 1 tool that
+ *      opts in), the tool-use loop PAUSES and asks the injected
+ *      `ConfirmationProvider` for an explicit confirm/cancel decision (R-2,
+ *      R-6). The decision (confirmed/cancelled) is always recorded to the
+ *      activity log, whether or not the tool ultimately runs.
+ *   5. Only on confirmation (or for tools that don't require it) is the call
+ *      dispatched to the skill's MCP client; the outcome is recorded to the
  *      activity log (FR-2.6) with skill, tool, params, tier, and outcome.
  */
-function buildToolExecutor(sessionId: string) {
+function buildToolExecutor(sessionId: string, confirmationProvider: ConfirmationProvider) {
   return async function executeTool(
     namespacedName: string,
     args: Record<string, unknown>,
@@ -128,7 +167,7 @@ function buildToolExecutor(sessionId: string) {
 
     const { skillId, toolName } = split;
     const skill = skillRegistry.get(skillId);
-    const tier = classifyTool({ skill: skillId, tool: toolName }, TIER_ASSIGNMENTS);
+    const tier = classifyTool({ skill: skillId, tool: toolName }, TIER_ASSIGNMENTS, args, CLASSIFIER_HOOKS);
 
     const client = skill?.status === "connected" ? skill.client : undefined;
     if (!client) {
@@ -144,11 +183,10 @@ function buildToolExecutor(sessionId: string) {
       return { content: message, isError: true };
     }
 
-    // R-6: Tier enforcement happens here, before the call reaches the
-    // skill's MCP client. Tier 2/3 (and any Tier 1 tool that opts into
-    // confirmation) are refused until Phase 2's confirmation flow exists.
-    const refusal = refuseUnconfirmableTier({ skill: skillId, tool: toolName }, tier);
-    if (refusal) {
+    // R-4: Pause/Do-Nothing mode blocks ALL write tools (Tier 1+),
+    // regardless of confirmation, checked BEFORE any confirmation prompt.
+    if (tier !== PermissionTier.ReadOnly && isPauseModeActive(getSetting)) {
+      const refusal = pauseModeRefusal({ skill: skillId, tool: toolName }, tier);
       recordActivity({
         skill: skillId,
         tool: toolName,
@@ -158,6 +196,37 @@ function buildToolExecutor(sessionId: string) {
         summary: refusal,
       });
       return { content: refusal, isError: true };
+    }
+
+    // R-1/R-2/R-6: pause and ask for confirmation if this tier requires it.
+    let confirmationDecision: ConfirmationDecision | undefined;
+    if (requiresConfirmation(tier)) {
+      const description = describeToolCall({ skill: skillId, tool: toolName }, args);
+      confirmationDecision = await confirmationProvider.requestConfirmation({
+        tool: { skill: skillId, tool: toolName },
+        tier,
+        description,
+        args,
+      });
+
+      recordActivity({
+        skill: skillId,
+        tool: toolName,
+        tier,
+        params: { sessionId, args },
+        outcome: confirmationDecision === "approved" ? "success" : "denied",
+        summary:
+          confirmationDecision === "approved"
+            ? `Confirmed: ${description}`
+            : `Cancelled (not run): ${description}`,
+      });
+
+      if (!shouldProceedAfterConfirmation(tier, confirmationDecision)) {
+        return {
+          content: `Cancelled - "${skillId}.${toolName}" was not run because the user did not confirm it.`,
+          isError: true,
+        };
+      }
     }
 
     let outcome: ActivityOutcome = "success";
@@ -196,7 +265,11 @@ function buildToolExecutor(sessionId: string) {
  * activity log entry for the overall chat exchange. Any tool calls the Brain
  * makes along the way are logged separately by `buildToolExecutor`.
  */
-export async function handleUserMessage(sessionId: string, message: string): Promise<AgentResponse> {
+export async function handleUserMessage(
+  sessionId: string,
+  message: string,
+  confirmationProvider: ConfirmationProvider = DENY_ALL_CONFIRMATION_PROVIDER,
+): Promise<AgentResponse> {
   recordMessage(sessionId, "user", message);
 
   const history: ConversationTurn[] = getSessionMessages(sessionId)
@@ -207,7 +280,7 @@ export async function handleUserMessage(sessionId: string, message: string): Pro
     .map((msg) => ({ role: msg.role, content: msg.content }));
 
   const tools = await collectBrainTools();
-  const executeTool = tools.length > 0 ? buildToolExecutor(sessionId) : undefined;
+  const executeTool = tools.length > 0 ? buildToolExecutor(sessionId, confirmationProvider) : undefined;
 
   const { text, stub } = await think(history, tools, executeTool);
 

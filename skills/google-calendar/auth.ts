@@ -2,9 +2,17 @@
 // Google OAuth 2.0 (desktop/installed-app flow) for the Google Calendar
 // skill (PRD Section 6.3, SEC-1, SEC-2).
 //
-// Scope: READ-ONLY ONLY. This skill must never request a broader scope than
-// `calendar.readonly` - Phase 1 has no event-write tools, and the OAuth
-// consent screen the user approves should reflect that.
+// Scope: Phase 2 upgrades from `calendar.readonly` to `calendar.events`
+// (read+write of events only - narrower than the full `calendar` scope,
+// which would also allow managing calendars themselves). This is required
+// for the new create_event / update_event / delete_event tools (FR-3.3).
+//
+// IMPORTANT - SCOPE UPGRADE / RE-AUTHORIZATION: anyone who completed the
+// Phase 1 (read-only) authorization has tokens scoped to
+// `calendar.readonly` only. Those tokens do NOT carry write access -
+// Google will return a permission error if the new write tools are called
+// with an old token. Users must re-run the one-time authorization (README
+// "Connect your Google Calendar - scope upgrade") to grant the new scope.
 //
 // Credentials and tokens:
 //   - The OAuth *client* id/secret (created once by the user in Google Cloud
@@ -35,11 +43,22 @@ import { config } from "../../config";
 import { getSecret, setSecret } from "../../security/vault";
 
 /**
- * The ONLY scope this skill ever requests. Phase 1 is read-only end-to-end
- * (PRD hard requirement) - do not add write scopes here without also adding
- * write tools, tier assignments, and the confirmation flow (Phase 2+).
+ * @deprecated Phase 1's read-only scope. Kept as a named constant for
+ * reference/tests (e.g. to recognize a still-valid-but-narrower Phase 1
+ * token), but JARVIS now requests {@link CALENDAR_EVENTS_SCOPE}.
  */
 export const CALENDAR_READONLY_SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
+
+/**
+ * The scope this skill requests from Phase 2 onward: read AND write access
+ * to events (create/update/delete/list), but NOT calendar management itself
+ * (creating/deleting calendars, sharing settings, etc.) - narrower than the
+ * full `calendar` scope, per SEC-2 least-privilege. Any user who only
+ * completed the Phase 1 (read-only) authorization must re-authorize to use
+ * the new write tools (README "Connect your Google Calendar - scope
+ * upgrade").
+ */
+export const CALENDAR_EVENTS_SCOPE = "https://www.googleapis.com/auth/calendar.events";
 
 /** Vault account name under which the user's OAuth tokens are stored. */
 export const CALENDAR_TOKEN_VAULT_ACCOUNT = "google-calendar-oauth-tokens";
@@ -158,7 +177,7 @@ export function getAuthorizationUrl(): string | undefined {
 
   return client.generateAuthUrl({
     access_type: "offline", // request a refresh token
-    scope: [CALENDAR_READONLY_SCOPE],
+    scope: [CALENDAR_EVENTS_SCOPE],
     prompt: "consent",
   });
 }

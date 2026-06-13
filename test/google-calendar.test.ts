@@ -47,9 +47,9 @@ describe("Google Calendar skill - read-only scope", () => {
 });
 
 describe("Google Calendar MCP server - stub mode (no account connected)", () => {
-  it("registers list_calendars and list_events, both Tier 0 (read-only)", async () => {
+  it("registers the read tools (Tier 0) and write tools (create/update/delete event)", async () => {
     const { registerGoogleCalendarSkill, GOOGLE_CALENDAR_SKILL_ID } = await import("../skills/google-calendar");
-    const { PermissionTier } = await import("../core/permissions");
+    const { PermissionTier, classifyTool, TIER_ASSIGNMENTS } = await import("../core/permissions");
 
     const descriptor = await registerGoogleCalendarSkill();
 
@@ -57,11 +57,18 @@ describe("Google Calendar MCP server - stub mode (no account connected)", () => 
     expect(descriptor.id).toBe(GOOGLE_CALENDAR_SKILL_ID);
 
     const toolNames = descriptor.tools.map((t) => t.name).sort();
-    expect(toolNames).toEqual(["list_calendars", "list_events"]);
+    expect(toolNames).toEqual(["create_event", "delete_event", "list_calendars", "list_events", "update_event"]);
 
     for (const tool of descriptor.tools) {
-      expect(tool.tier).toBe(PermissionTier.ReadOnly);
+      if (tool.name === "list_calendars" || tool.name === "list_events") {
+        expect(tool.tier).toBe(PermissionTier.ReadOnly);
+      }
     }
+
+    // delete_event is always Tier 2 (hard to reverse), regardless of arguments.
+    expect(classifyTool({ skill: GOOGLE_CALENDAR_SKILL_ID, tool: "delete_event" }, TIER_ASSIGNMENTS)).toBe(
+      PermissionTier.ExternalOrHardToReverse,
+    );
   });
 
   it("list_calendars returns a clearly-labeled stub result with no real data", async () => {

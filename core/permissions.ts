@@ -81,11 +81,24 @@ export const DEFAULT_UNKNOWN_TIER: PermissionTier = PermissionTier.FinancialOrIr
  * Classify a tool call into a permission tier using the supplied
  * assignment table, falling back to DEFAULT_UNKNOWN_TIER for anything not
  * explicitly listed (R-5, R-6, FR-7.1).
+ *
+ * If `args` and a matching entry in `classifierHooks` are supplied, the
+ * classifier's result is used INSTEAD of the static table - this is how a
+ * tool's tier can depend on its call arguments (e.g. calendar event create
+ * with vs. without attendees). Callers that only want the static
+ * classification (e.g. building the skill registry's tool list before any
+ * call has been made) simply omit `args`/`classifierHooks`.
  */
 export function classifyTool(
   { skill, tool }: ToolIdentifier,
   assignments: TierAssignments,
+  args?: Record<string, unknown>,
+  classifierHooks?: ClassifierHooks,
 ): PermissionTier {
+  if (args && classifierHooks) {
+    const hook = classifierHooks[skill]?.[tool];
+    if (hook) return hook(args);
+  }
   return assignments[skill]?.[tool] ?? DEFAULT_UNKNOWN_TIER;
 }
 
@@ -116,6 +129,21 @@ export const TIER_ASSIGNMENTS: TierAssignments = {
   "google-calendar": {
     list_events: PermissionTier.ReadOnly,
     list_calendars: PermissionTier.ReadOnly,
+    // create_event / update_event are argument-dependent (see
+    // CLASSIFIER_HOOKS below) - no-attendee create/update is Tier 1,
+    // attendee-affecting create/update is Tier 2.
+    // delete_event and attendee add/remove always require confirmation.
+    delete_event: PermissionTier.ExternalOrHardToReverse,
+  },
+  gmail: {
+    search_messages: PermissionTier.ReadOnly,
+    read_message: PermissionTier.ReadOnly,
+    read_thread: PermissionTier.ReadOnly,
+    list_unread: PermissionTier.ReadOnly,
+    summarize_inbox: PermissionTier.ReadOnly,
+    create_draft: PermissionTier.ReversibleInternal,
+    mark_read: PermissionTier.ReversibleInternal,
+    label_message: PermissionTier.ReversibleInternal,
   },
 };
 
@@ -123,13 +151,181 @@ export const TIER_ASSIGNMENTS: TierAssignments = {
 export const PHASE0_TIER_ASSIGNMENTS: TierAssignments = TIER_ASSIGNMENTS;
 
 // ---------------------------------------------------------------------------
-// Confirmation seam (FR-2.5, R-2, R-3, R-6) - Phase 2 implements the real
-// flow. Phase 1 wires the *enforcement* (a Tier 2/3 tool call is refused
-// before it ever reaches the skill), but the actual "ask the user and wait
-// for yes/no" interaction is not built yet.
+// Argument-aware tier classification (Phase 2).
+//
+// Some tools' tier depends on the arguments the model supplies - e.g.
+// creating a calendar event with no attendees is Tier 1 (reversible,
+// internal-only), but creating/updating one WITH attendees notifies other
+// people and is Tier 2 (FR-3.3/3.4). `classifyTool` below consults this table
+// FIRST; if a skill+tool has a classifier hook, its result wins over the
+// static `TIER_ASSIGNMENTS` table. Tools with no hook fall back to the static
+// table (and then to DEFAULT_UNKNOWN_TIER, R-5).
 // ---------------------------------------------------------------------------
 
-/** Outcome of a confirmation request, once Phase 2 implements the real flow. */
+/** A per-tool function that computes a tier from the tool's call arguments. */
+export type TierClassifier = (args: Record<string, unknown>) => PermissionTier;
+
+/** classifier hooks: skill -> tool -> TierClassifier. */
+export type ClassifierHooks = Record<string, Record<string, TierClassifier>>;
+
+/**
+ * Returns true if `args.attendees` (or `args.addAttendees`/`args.removeAttendees`)
+ * is a non-empty array - i.e. the call would add/notify at least one attendee.
+ */
+function hasAttendees(args: Record<string, unknown>): boolean {
+  for (const key of ["attendees", "addAttendees", "removeAttendees"]) {
+    const value = args[key];
+    if (Array.isArray(value) && value.length > 0) return true;
+  }
+  return false;
+}
+
+/**
+ * Classifier hooks for the Google Calendar write tools (FR-3.3/3.4):
+ *   - create_event / update_event: Tier 1 (no confirmation) if the call has
+ *     no attendees; Tier 2 (confirmation required) if it adds/notifies
+ *     attendees, since that affects other people's calendars.
+ *   - delete_event and explicit attendee add/remove tools are always Tier 2
+ *     via the static TIER_ASSIGNMENTS table (deletes are hard to reverse
+ *     regardless of attendees).
+ */
+export const CLASSIFIER_HOOKS: ClassifierHooks = {
+  "google-calendar": {
+    create_event: (args) =>
+      hasAttendees(args) ? PermissionTier.ExternalOrHardToReverse : PermissionTier.ReversibleInternal,
+    update_event: (args) =>
+      hasAttendees(args) ? PermissionTier.ExternalOrHardToReverse : PermissionTier.ReversibleInternal,
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Plain-language descriptions for confirmation prompts (R-2).
+//
+// `describeToolCall` turns a tool name + its (validated) arguments into a
+// human-readable sentence describing EXACTLY what is about to happen,
+// including specific names/dates/times (with time zone) and recipients
+// where applicable. core/agent.ts uses this to build the
+// `ConfirmationRequest.description` shown to the user before a Tier 1+ tool
+// (when confirmation is required) actually runs.
+//
+// This is intentionally a pure, best-effort formatter: it must never invent
+// details that aren't in `args`, and it must never read instructions out of
+// untrusted skill-returned content (FR-2.7) - it only looks at the
+// model-supplied call arguments, which the user is being asked to approve.
+// ---------------------------------------------------------------------------
+
+/** Format an ISO-ish date-time string for display, including its offset/time zone if present. */
+function formatWhen(value: unknown): string | undefined {
+  if (typeof value !== "string" || value.length === 0) return undefined;
+  return value;
+}
+
+function formatList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((v): v is string => typeof v === "string" && v.length > 0);
+}
+
+/**
+ * Build a plain-language description of a tool call for the confirmation
+ * prompt (R-2). Falls back to a generic "run <skill>.<tool> with these
+ * arguments" description for tools without a bespoke formatter.
+ */
+export function describeToolCall({ skill, tool }: ToolIdentifier, args: Record<string, unknown>): string {
+  if (skill === "google-calendar") {
+    return describeCalendarToolCall(tool, args);
+  }
+  if (skill === "gmail") {
+    return describeGmailToolCall(tool, args);
+  }
+  return `Run "${skill}.${tool}" with arguments: ${JSON.stringify(args)}`;
+}
+
+function describeCalendarToolCall(tool: string, args: Record<string, unknown>): string {
+  const title = typeof args.title === "string" && args.title ? args.title : "(untitled event)";
+  const start = formatWhen(args.start);
+  const end = formatWhen(args.end);
+  const attendees = formatList(args.attendees);
+  const addAttendees = formatList(args.addAttendees);
+  const removeAttendees = formatList(args.removeAttendees);
+  const timeZone = typeof args.timeZone === "string" && args.timeZone ? args.timeZone : undefined;
+  const eventId = typeof args.eventId === "string" && args.eventId ? args.eventId : undefined;
+
+  const when = [start, end].filter(Boolean).join(" to ");
+  const whenWithTz = when && timeZone ? `${when} (${timeZone})` : when;
+
+  switch (tool) {
+    case "create_event": {
+      let description = `Create a calendar event "${title}"`;
+      if (whenWithTz) description += ` from ${whenWithTz}`;
+      if (attendees.length > 0) {
+        description += `, and notify ${attendees.length} attendee(s): ${attendees.join(", ")}`;
+      } else {
+        description += " (no attendees, personal event only)";
+      }
+      if (typeof args.conflictWarning === "string" && args.conflictWarning) {
+        description += `. WARNING: ${args.conflictWarning}`;
+      }
+      return description;
+    }
+    case "update_event": {
+      let description = `Update calendar event ${eventId ? `"${eventId}"` : title}`;
+      if (whenWithTz) description += `, moving it to ${whenWithTz}`;
+      if (addAttendees.length > 0) {
+        description += `, and notify new attendee(s): ${addAttendees.join(", ")}`;
+      }
+      if (removeAttendees.length > 0) {
+        description += `, and remove attendee(s): ${removeAttendees.join(", ")}`;
+      }
+      if (attendees.length > 0) {
+        description += `, and notify attendee(s): ${attendees.join(", ")}`;
+      }
+      if (typeof args.conflictWarning === "string" && args.conflictWarning) {
+        description += `. WARNING: ${args.conflictWarning}`;
+      }
+      return description;
+    }
+    case "delete_event": {
+      return `Permanently delete calendar event ${eventId ? `"${eventId}"` : ""}${title !== "(untitled event)" ? ` "${title}"` : ""}${whenWithTz ? ` (scheduled ${whenWithTz})` : ""}. This cannot be undone, and any attendees will be notified of the cancellation.`.replace(/\s+/g, " ").trim();
+    }
+    default:
+      return `Run google-calendar.${tool} with arguments: ${JSON.stringify(args)}`;
+  }
+}
+
+function describeGmailToolCall(tool: string, args: Record<string, unknown>): string {
+  const to = formatList(args.to);
+  const cc = formatList(args.cc);
+  const subject = typeof args.subject === "string" && args.subject ? args.subject : "(no subject)";
+  const body = typeof args.body === "string" ? args.body : "";
+  const bodyPreview = body.length > 140 ? `${body.slice(0, 140)}...` : body;
+
+  switch (tool) {
+    case "create_draft": {
+      let description = `Save an email draft to ${to.length > 0 ? to.join(", ") : "(no recipient set)"}`;
+      if (cc.length > 0) description += ` (cc: ${cc.join(", ")})`;
+      description += ` with subject "${subject}"`;
+      if (bodyPreview) description += ` and body starting: "${bodyPreview}"`;
+      description += ". This saves a draft only - it will NOT be sent.";
+      return description;
+    }
+    default:
+      return `Run gmail.${tool} with arguments: ${JSON.stringify(args)}`;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Confirmation flow (FR-2.5, R-1..R-6) - Phase 2.
+//
+// Replaces the Phase 1 `refuseUnconfirmableTier` seam with a real "pause,
+// describe, wait for confirm/cancel" mechanism. The tool-use loop
+// (core/agent.ts) calls `requestConfirmation` (via an injected
+// `ConfirmationProvider`) for any tool call whose tier requires confirmation.
+// Only an explicit decision from the human user (via the UI or an injected
+// test fake) counts - content returned from a skill can never satisfy this
+// (FR-2.7).
+// ---------------------------------------------------------------------------
+
+/** Outcome of a confirmation request. */
 export type ConfirmationDecision = "approved" | "denied" | "timed_out";
 
 /** Plain-language details shown to the user when confirming a Tier 2/3 action (R-2). */
@@ -143,32 +339,62 @@ export interface ConfirmationRequest {
 }
 
 /**
- * TODO(Phase 2): Implement the real confirmation flow.
+ * Pluggable confirmation delivery (R-2, SEC-6):
+ *   - The Electron UI implements this by showing a Confirm/Cancel prompt and
+ *     waiting for the user's click (real IPC round-trip).
+ *   - Tests inject a fake provider that auto-confirms or auto-cancels, so the
+ *     confirmation flow can be exercised headlessly.
  *
- * This function is the seam the tool-use loop (core/agent.ts) will call for
- * Tier 1 (if the user has opted into auto-approve) and Tier 2/3 tool calls.
- * It should:
- *   - Surface `request.description` to the user via voice and/or the UI
- *     (R-2: plain language, with specific names/amounts/dates).
- *   - Wait for an explicit "yes"/"confirm"/click (Tier 3: UI-click only per
- *     SEC-6) or "no"/"cancel".
- *   - Never be satisfiable by content returned from a skill (FR-2.7) - only
- *     the human user's own input counts.
- *   - For Tier 3, this can NEVER be configured to auto-approve (R-1).
- *
- * Phase 1 has no tools above Tier 0, so this is never called by the current
- * loop - see `refuseUnconfirmableTier` below for how Tier 2/3 calls are
- * handled until this lands.
+ * Implementations must NEVER be satisfiable by anything other than the
+ * human user's own input (FR-2.7) - in particular, never by parsing skill-
+ * returned content for words like "confirm".
  */
-export type RequestConfirmation = (request: ConfirmationRequest) => Promise<ConfirmationDecision>;
+export interface ConfirmationProvider {
+  requestConfirmation(request: ConfirmationRequest): Promise<ConfirmationDecision>;
+}
 
 /**
- * Phase 1 enforcement for Tier 2/3 tools: until `RequestConfirmation` (above)
- * is implemented in Phase 2, the tool-use loop must NOT execute any tool
- * whose tier requires confirmation (R-6: enforced by the Brain, before the
- * call leaves the machine). Returns a clear, user-facing refusal message if
- * the tool cannot run yet; returns `undefined` if it's safe to proceed
- * (Tier 0, or Tier 1 when `requiresConfirmation` is false).
+ * R-1 (hardcoded, not configurable): Tier 3 actions can NEVER be
+ * auto-approved by any provider or setting. No tool in Phase 2 is Tier 3,
+ * but this guard exists so a future Tier 3 tool can't accidentally bypass
+ * confirmation via a misconfigured provider.
+ */
+export function assertTierThreeNeverAutoApproved(tier: PermissionTier, decision: ConfirmationDecision): void {
+  if (tier === PermissionTier.FinancialOrIrreversible && decision !== "approved" && decision !== "denied") {
+    throw new Error("Tier 3 actions must receive an explicit approve/deny decision - never auto-approved (R-1).");
+  }
+}
+
+/**
+ * Decide whether a tool call should proceed, given its tier and (if
+ * required) a confirmation decision.
+ *
+ *   - Tier 0, or Tier 1 when `requiresConfirmation` is false: always proceeds
+ *     (`decision` is ignored/undefined).
+ *   - Tier 1 with confirmation enabled, Tier 2, Tier 3: proceeds only if
+ *     `decision === "approved"`.
+ *
+ * This is a pure function so the confirmation *decision* (made by
+ * `ConfirmationProvider`) stays separate from the *policy* of what to do with
+ * it - easy to unit test without a real provider.
+ */
+export function shouldProceedAfterConfirmation(
+  tier: PermissionTier,
+  decision: ConfirmationDecision | undefined,
+): boolean {
+  if (!requiresConfirmation(tier)) return true;
+  return decision === "approved";
+}
+
+/**
+ * Phase 1 enforcement, retained for tools that somehow reach Tier 2/3 with NO
+ * confirmation provider configured at all (should not happen once
+ * core/agent.ts always supplies one, but kept as a defensive fallback /
+ * documents the pre-Phase-2 behavior for any caller that doesn't wire a
+ * provider). Returns a clear, user-facing refusal message if the tool cannot
+ * run without confirmation and no provider is available; returns `undefined`
+ * if it's safe to proceed (Tier 0, or Tier 1 when `requiresConfirmation` is
+ * false).
  */
 export function refuseUnconfirmableTier(
   { skill, tool }: ToolIdentifier,
@@ -177,9 +403,45 @@ export function refuseUnconfirmableTier(
   if (!requiresConfirmation(tier)) return undefined;
 
   return (
-    `I can't run "${skill}.${tool}" yet - it's classified as ${tierLabel(tier)} ` +
-    `(Tier ${tier}), which requires your confirmation before it can run. ` +
-    `The confirmation flow isn't built yet (planned for Phase 2), so this ` +
-    `action is refused for now rather than running unconfirmed.`
+    `I can't run "${skill}.${tool}" - it's classified as ${tierLabel(tier)} ` +
+    `(Tier ${tier}), which requires your confirmation before it can run, but ` +
+    `no confirmation provider is configured. This action is refused rather ` +
+    `than running unconfirmed.`
+  );
+}
+
+// ---------------------------------------------------------------------------
+// R-4: Global "Pause / Do-Nothing mode". When active, JARVIS can converse and
+// read, but takes ZERO write actions (Tier 1+) across all skills, regardless
+// of confirmation. core/agent.ts checks `isPaused()` before even requesting
+// confirmation for a write tool.
+// ---------------------------------------------------------------------------
+
+let pauseModeOverride: boolean | undefined;
+
+/**
+ * Whether Pause/Do-Nothing mode is currently active. Backed by the settings
+ * store (store/settings.ts key "pauseMode") in normal operation; tests can
+ * call `setPauseModeOverride` to avoid touching the database.
+ */
+export function isPauseModeActive(getSettingFn: (key: string) => string | undefined): boolean {
+  if (pauseModeOverride !== undefined) return pauseModeOverride;
+  return getSettingFn("pauseMode") === "true";
+}
+
+/** Test-only seam: force `isPauseModeActive` to a fixed value, or `undefined` to clear the override. */
+export function setPauseModeOverride(value: boolean | undefined): void {
+  pauseModeOverride = value;
+}
+
+/**
+ * Refusal message used when Pause/Do-Nothing mode (R-4) blocks a write tool
+ * (Tier 1+) regardless of its confirmation status.
+ */
+export function pauseModeRefusal({ skill, tool }: ToolIdentifier, tier: PermissionTier): string {
+  return (
+    `I can't run "${skill}.${tool}" (Tier ${tier}, ${tierLabel(tier)}) right now - ` +
+    `JARVIS is in Pause/Do-Nothing mode, which blocks all write actions until ` +
+    `it's turned off. I can still read data and answer questions.`
   );
 }
