@@ -161,15 +161,102 @@ via a couple of one-line commands you run once from a terminal:
 6. Restart JARVIS (`npm start`). Ask it "what's on my calendar today?" - it
    should now read your real calendar.
 
-Your tokens are stored in JARVIS's local credential vault (Section 5 below),
+Your tokens are stored in JARVIS's local credential vault (Section 7 below),
 never in `.env`, the repo, or anywhere else. To disconnect, remove the stored
 tokens from the vault (e.g. delete the relevant entry from your OS keychain,
 or `data/.jarvis-dev-vault.json` if you're using the file-based fallback) and
 JARVIS goes back to stub mode for the calendar skill.
 
+The same Google account/tokens also power the **Gmail** skill (read your
+inbox, create drafts, and - as of this build - **send email**). Gmail uses
+the same `GOOGLE_OAUTH_CLIENT_ID`/`GOOGLE_OAUTH_CLIENT_SECRET` from Step 2
+above; no separate setup is required.
+
+> **Gmail can now send email.** JARVIS can compose and send a real email, or
+> send an existing draft, on your behalf. **Every send always asks for your
+> explicit confirmation first** - it will show you the exact recipients,
+> subject, and a preview of the body, and remind you that a sent email
+> "cannot be unsent". There is no way for JARVIS to send mail without you
+> clicking Confirm, even if Gmail isn't connected yet (it will simply show you
+> what it *would* send). JARVIS has no tool to delete or trash email.
+
 ---
 
-## 5. The credential vault
+## 5. Connect Stripe (optional, read-only, TEST MODE)
+
+JARVIS can look up your Stripe balance, recent charges, payouts, customers,
+disputes, and invoices so it can answer questions like "what's my Stripe
+balance?" or "any new disputes this week?". This is **read-only** - there is
+no tool to issue refunds, create charges, or change anything in Stripe.
+
+If you skip this section, JARVIS still works - the Stripe tools simply return
+a clearly-labeled "no Stripe account is connected" placeholder with example
+numbers.
+
+**Safety rail: JARVIS defaults to Stripe TEST MODE.** It will refuse to use a
+live-mode key (`sk_live_...`/`rk_live_...`) unless you explicitly set
+`STRIPE_ALLOW_LIVE_MODE=true` in `.env` - so there's no risk of JARVIS
+accidentally querying your real, live Stripe account while you're testing.
+
+### Step 1: Create a restricted, read-only, TEST-MODE API key
+
+1. Go to https://dashboard.stripe.com/ and sign in.
+2. Make sure you're in **Test mode** (toggle in the top-right of the
+   dashboard) - this is the default for a new Stripe account.
+3. Go to **Developers -> API keys -> Create restricted key**.
+4. Give it a name (e.g. "JARVIS read-only").
+5. Set the following to **Read** access, and leave everything else as **None**:
+   - Balance
+   - Charges
+   - Payouts
+   - Customers
+   - Disputes
+   - Invoices
+6. Click **Create key** and copy the key - it will start with `rk_test_`.
+
+### Step 2: Add the key to JARVIS
+
+1. Copy `.env.example` to `.env` if you haven't already (see Section 3).
+2. Open `.env` and paste your key into either field (they're equivalent -
+   use one):
+   ```
+   STRIPE_API_KEY=rk_test_your_key_here
+   ```
+3. Leave `STRIPE_ALLOW_LIVE_MODE` unset/`false` unless you specifically want
+   JARVIS to use a live-mode key (not recommended).
+4. Save `.env` and restart JARVIS (`npm start`). Ask it "what's my Stripe
+   balance?" - it should now return real test-mode data from your account.
+
+---
+
+## 6. Cost meter & budget cap
+
+Every call JARVIS makes to the Claude API is recorded in a local cost ledger
+with an **estimated** cost in USD, based on the model's published per-million-
+token pricing for input/output tokens (Sonnet 4.5: $3 / $15 per million
+input/output tokens; Haiku 4.5: $1 / $5 per million - see
+https://www.anthropic.com/pricing and `core/brain.ts` for the exact table;
+this is an estimate, not your actual bill from Anthropic).
+
+The sidebar's **Status** panel shows:
+- **Cost today** and **Cost this month** - running totals from the ledger.
+- **Budget cap** - your configured `JARVIS_MONTHLY_BUDGET_USD` (default `$20`).
+
+Set `JARVIS_MONTHLY_BUDGET_USD` in `.env` to your preferred monthly limit.
+
+- At **80%** of the cap, the sidebar shows a yellow "approaching budget cap"
+  warning.
+- At **100% or more**, the sidebar shows a red warning and JARVIS switches to
+  **restricted mode**: it stops making further paid Claude calls for the rest
+  of the calendar month and instead replies with a clearly-labeled message
+  explaining that the cap has been reached. Read-only tools, the activity
+  log, and the cost ledger remain available. JARVIS automatically resumes
+  normal operation at the start of the next month, or as soon as you raise
+  `JARVIS_MONTHLY_BUDGET_USD`.
+
+---
+
+## 7. The credential vault
 
 JARVIS stores integration secrets (API keys, OAuth tokens - used by later
 phases) in your operating system's secure keychain:
@@ -187,7 +274,7 @@ backend automatically and the rest of the app behaves identically either way.
 
 ---
 
-## 6. Useful commands
+## 8. Useful commands
 
 | Command | What it does |
 |---|---|
@@ -200,34 +287,39 @@ backend automatically and the rest of the app behaves identically either way.
 
 ---
 
-## 7. What's in this Phase 1 build
+## 9. What's in this Phase 1 build
 
-- **`app/`** - Electron main process + preload bridge (window, IPC). Now also
-  connects all skills (Section 8) at startup.
+- **`app/`** - Electron main process + preload bridge (window, IPC). Connects
+  all skills and surfaces the live cost meter / budget status at startup.
 - **`ui/`** - The desktop window's HTML/CSS/TypeScript (conversation view,
-  activity log, status panel).
+  activity log, status panel, cost meter + budget warnings, confirmation
+  modal).
 - **`core/`** - The "Brain": talks to the Claude API (or returns a stub reply
   if no key is set), runs the generic MCP tool-use loop (FR-2.3) so the model
-  can call any connected skill's tools, and the permission-tier framework
+  can call any connected skill's tools, the permission-tier framework
   (Tier 0-3) that enforces R-6 (every tool call is classified and, for Tier
-  2/3, refused before it ever runs).
-- **`skills/`** - MCP client plumbing and the skill registry. Phase 1 connects
-  the first real integration: `skills/google-calendar/` (read-only).
-- **`voice/`** - Pluggable voice adapter interface. Phase 1 still ships only
-  the text-only fallback (FR-1.6) - full voice arrives in a later phase.
+  2/3, refused before confirmation), and the monthly budget cap / restricted
+  mode (FR-8.3).
+- **`skills/`** - MCP client plumbing and the skill registry. Built-in
+  integrations: `skills/google-calendar/` (read + write events),
+  `skills/gmail/` (read, draft, and send - send is Tier 2 with mandatory
+  confirmation), and `skills/stripe/` (read-only, TEST MODE by default).
+- **`voice/`** - Pluggable voice adapter interface. Currently ships the
+  text-only fallback (FR-1.6) - full voice arrives in a later phase.
 - **`store/`** - SQLite access for conversations, the activity log, long-term
-  memory, the cost ledger, and settings.
-- **`security/`** - The credential vault wrapper described above, now also
-  storing Google OAuth tokens (Section 4).
+  memory, the cost ledger (with budget-cap status), and settings.
+- **`security/`** - The credential vault wrapper described above, storing
+  Google OAuth tokens and (optionally) a Stripe API key.
 - **`config/`** - Reads `.env` and exposes typed configuration to the rest of
-  the app, including the time zone and Google OAuth settings.
+  the app, including the time zone, Google OAuth, Stripe, and budget settings.
 - **`test/`** - Automated tests covering config, permission tiers (including
-  Tier 2/3 refusal), the store, the vault, the tool-use loop, the agent's
-  stub-mode flow, and the Google Calendar skill's stub mode.
+  Tier 2/3 refusal and confirmation flows), the store, the vault, the
+  tool-use loop, the agent's stub-mode flow, the Google Calendar/Gmail/Stripe
+  skills' stub modes, Gmail send confirmation, and the budget cap.
 
 ---
 
-## 8. Troubleshooting
+## 10. Troubleshooting
 
 - **Nothing happens / window doesn't open**: make sure you're running on a
   machine with a desktop environment (Electron needs a display). Headless

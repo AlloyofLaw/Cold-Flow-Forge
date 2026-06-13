@@ -84,6 +84,22 @@ async function refreshStatus(): Promise<void> {
   byId<HTMLElement>("status-cost-month").textContent = formatUsd(status.monthCostUsd);
   byId<HTMLElement>("status-budget").textContent = `${formatUsd(status.monthlyBudgetUsd)} / mo`;
 
+  // FR-8.3: show a clear warning when approaching (>=80%) or at/over
+  // (>=100%, restricted mode) the monthly budget cap.
+  const budgetWarning = byId<HTMLElement>("status-budget-warning");
+  const pct = Math.round(status.budgetFractionUsed * 100);
+  if (status.budgetState === "exceeded") {
+    budgetWarning.textContent = `Budget cap reached (${pct}% of $${status.monthlyBudgetUsd.toFixed(2)}) - JARVIS is in restricted mode and will not make further paid model calls this month.`;
+    budgetWarning.className = "budget-warning budget-exceeded";
+    budgetWarning.hidden = false;
+  } else if (status.budgetState === "approaching") {
+    budgetWarning.textContent = `Approaching monthly budget cap (${pct}% of $${status.monthlyBudgetUsd.toFixed(2)}).`;
+    budgetWarning.className = "budget-warning budget-approaching";
+    budgetWarning.hidden = false;
+  } else {
+    budgetWarning.hidden = true;
+  }
+
   const dot = byId<HTMLElement>("status-dot");
   dot.style.background = status.hasAnthropicApiKey ? "#4dff88" : "#ffcc4d";
 }

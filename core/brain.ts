@@ -23,7 +23,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { config } from "../config";
-import { recordCost } from "../store/costLedger";
+import { recordCost, getBudgetStatus } from "../store/costLedger";
 
 export interface BrainReply {
   /** The text JARVIS should speak/display in response. */
@@ -80,9 +80,15 @@ function getClient(): Anthropic {
 }
 
 /**
- * Very rough cost estimate for Claude calls, used only so the cost ledger
- * has non-zero numbers to display in Phase 0. Real pricing should be kept
- * in sync with https://www.anthropic.com/pricing as models change.
+ * Per-model $/token pricing used to estimate the cost of each call (FR-2.8).
+ *
+ * ASSUMPTION (documented, easy to update): these figures are based on the
+ * published Anthropic API pricing for Claude Sonnet 4.5 ($3 / $15 per
+ * million input/output tokens) and Claude Haiku 4.5 ($1 / $5 per million
+ * input/output tokens) as of this writing - see
+ * https://www.anthropic.com/pricing. If pricing changes, update this table
+ * (a single place) rather than any per-call code. Any model not listed here
+ * falls back to the Sonnet 4.5 rate as a conservative default.
  */
 const PRICE_PER_MILLION_TOKENS_USD: Record<string, { input: number; output: number }> = {
   "claude-sonnet-4-5": { input: 3, output: 15 },
@@ -101,6 +107,28 @@ function estimateCostUsd(model: string, inputTokens: number, outputTokens: numbe
 function stubReply(userMessage: string): BrainReply {
   return {
     text: `${STUB_PREFIX} You said: "${userMessage}"`,
+    stub: true,
+  };
+}
+
+const BUDGET_EXCEEDED_PREFIX = "[BUDGET CAP REACHED - restricted mode]";
+
+/**
+ * FR-8.3: reply used when the current month's cost ledger total has reached
+ * or exceeded the configured monthly budget cap. JARVIS refuses to make
+ * further PAID model calls (restricted mode) until the next calendar month,
+ * or until the user raises `JARVIS_MONTHLY_BUDGET_USD` in settings/.env.
+ * Like the offline stub, this records a $0 cost ledger entry and never calls
+ * the Anthropic API.
+ */
+function budgetExceededReply(monthCostUsd: number, monthlyBudgetUsd: number): BrainReply {
+  return {
+    text:
+      `${BUDGET_EXCEEDED_PREFIX} JARVIS has spent an estimated $${monthCostUsd.toFixed(2)} this month, ` +
+      `at or above the configured monthly budget cap of $${monthlyBudgetUsd.toFixed(2)} (FR-8.3). ` +
+      "To protect you from surprise bills, JARVIS will not make further paid model calls until next " +
+      "month, or until you raise JARVIS_MONTHLY_BUDGET_USD in settings. I can still show you what's " +
+      "in the activity log and cost ledger.",
     stub: true,
   };
 }
@@ -148,6 +176,24 @@ export async function think(
 
   if (!config.hasAnthropicApiKey) {
     const reply = stubReply(lastUserMessage);
+    recordCost({
+      provider: "anthropic",
+      model: config.modelMain,
+      inputUnits: 0,
+      outputUnits: 0,
+      unitKind: "tokens",
+      estimatedCostUsd: 0,
+    });
+    return reply;
+  }
+
+  // FR-8.3: if the current month's cost ledger total has already reached the
+  // configured monthly budget cap, switch to restricted mode - refuse to
+  // make a paid model call and return a clearly-labeled stub reply instead
+  // (still recording a $0 cost ledger entry, like the no-API-key stub path).
+  const budget = getBudgetStatus(config.monthlyBudgetUsd);
+  if (budget.state === "exceeded") {
+    const reply = budgetExceededReply(budget.monthCostUsd, budget.monthlyBudgetUsd);
     recordCost({
       provider: "anthropic",
       model: config.modelMain,

@@ -23,6 +23,10 @@ export interface JarvisStatus {
   monthlyBudgetUsd: number;
   todayCostUsd: number;
   monthCostUsd: number;
+  /** FR-8.3: "ok" | "approaching" (>=80% of cap) | "exceeded" (>=100%, restricted mode). */
+  budgetState: "ok" | "approaching" | "exceeded";
+  /** `monthCostUsd / monthlyBudgetUsd` (0 if there is no cap). */
+  budgetFractionUsed: number;
   voiceAdapter: {
     id: string;
     name: string;

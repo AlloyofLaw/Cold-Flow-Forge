@@ -14,7 +14,7 @@ import { handleUserMessage, createSessionId } from "../core/agent";
 import type { ConfirmationDecision, ConfirmationProvider, ConfirmationRequest } from "../core/permissions";
 import { listRecentActivity } from "../store/activityLog";
 import { getSessionMessages } from "../store/conversations";
-import { getCurrentMonthCost, getTodayCost } from "../store/costLedger";
+import { getTodayCost, getBudgetStatus } from "../store/costLedger";
 import { config } from "../config";
 import { getVoiceAdapter } from "../voice";
 import { registerAllSkills } from "../skills";
@@ -99,13 +99,16 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.getStatus, async () => {
     const voiceAdapter = getVoiceAdapter();
+    const budget = getBudgetStatus(config.monthlyBudgetUsd);
     return {
       sessionId: activeSessionId,
       hasAnthropicApiKey: config.hasAnthropicApiKey,
       modelMain: config.modelMain,
       monthlyBudgetUsd: config.monthlyBudgetUsd,
       todayCostUsd: getTodayCost(),
-      monthCostUsd: getCurrentMonthCost(),
+      monthCostUsd: budget.monthCostUsd,
+      budgetState: budget.state,
+      budgetFractionUsed: budget.fractionUsed,
       voiceAdapter: {
         id: voiceAdapter.id,
         name: voiceAdapter.name,

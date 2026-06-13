@@ -94,3 +94,49 @@ export function listRecentCosts(limit = 50, database: Database = getDb()): CostE
     .all(limit) as CostRow[];
   return rows.map(rowToEntry);
 }
+
+// ---------------------------------------------------------------------------
+// Budget cap (FR-8.3): "approaching" (>= 80% of the monthly cap) and
+// "exceeded" (>= 100%) states, computed from the current month's total cost
+// vs. the configured monthly budget.
+// ---------------------------------------------------------------------------
+
+/** Fraction of the monthly budget at which JARVIS shows an "approaching cap" warning (FR-8.3). */
+export const BUDGET_WARNING_THRESHOLD = 0.8;
+
+export type BudgetState = "ok" | "approaching" | "exceeded";
+
+export interface BudgetStatus {
+  /** Total estimated cost for the current calendar month (UTC), in USD. */
+  monthCostUsd: number;
+  /** The configured monthly budget cap, in USD. */
+  monthlyBudgetUsd: number;
+  /** `monthCostUsd / monthlyBudgetUsd`, or 0 if the cap is <= 0. */
+  fractionUsed: number;
+  /**
+   * - "ok": below the 80% warning threshold.
+   * - "approaching": at/above 80% but below 100% of the cap (FR-8.3 warning).
+   * - "exceeded": at/above 100% of the cap - restricted mode (FR-8.3).
+   */
+  state: BudgetState;
+}
+
+/**
+ * Compute the current month's cost vs. the configured monthly budget cap
+ * (FR-8.2/FR-8.3). A `monthlyBudgetUsd <= 0` is treated as "no cap" (always
+ * "ok") rather than dividing by zero / immediately exceeding.
+ */
+export function getBudgetStatus(monthlyBudgetUsd: number, database: Database = getDb()): BudgetStatus {
+  const monthCostUsd = getCurrentMonthCost(database);
+
+  if (monthlyBudgetUsd <= 0) {
+    return { monthCostUsd, monthlyBudgetUsd, fractionUsed: 0, state: "ok" };
+  }
+
+  const fractionUsed = monthCostUsd / monthlyBudgetUsd;
+  let state: BudgetState = "ok";
+  if (fractionUsed >= 1) state = "exceeded";
+  else if (fractionUsed >= BUDGET_WARNING_THRESHOLD) state = "approaching";
+
+  return { monthCostUsd, monthlyBudgetUsd, fractionUsed, state };
+}

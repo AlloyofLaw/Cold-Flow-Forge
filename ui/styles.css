@@ -207,6 +207,31 @@ body {
   justify-content: space-between;
 }
 
+/* Cost meter / budget cap warnings (FR-8.2/FR-8.3). */
+.budget-warning {
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.budget-warning[hidden] {
+  display: none;
+}
+
+.budget-approaching {
+  background: rgba(255, 204, 77, 0.15);
+  border: 1px solid rgba(255, 204, 77, 0.4);
+  color: #ffcc4d;
+}
+
+.budget-exceeded {
+  background: rgba(255, 92, 92, 0.15);
+  border: 1px solid rgba(255, 92, 92, 0.4);
+  color: #ff8a8a;
+}
+
 .settings-stub {
   font-size: 0.8rem;
   color: var(--muted);
