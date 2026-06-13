@@ -53,6 +53,7 @@ JARVIS also has a **local companion UI** — a desktop window that runs on your 
 - Mobile companion app / remote access to JARVIS when away from the local machine.
 - Long-term memory ("JARVIS remembers I prefer 30-min meetings, never schedules before 9am").
 - Multiple wake words / personas.
+- **Self-learning / adaptive behavior**: JARVIS notices patterns in how you work and how you respond to it — which suggestions you accept vs. reject, which meeting times you reschedule, which emails you always reply to the same way — and uses those patterns to get more useful over time (better defaults, fewer clarifying questions, smarter draft suggestions). Builds directly on the `memory` table (Section 12) and the activity log, which already record every interaction as training signal. Guardrails: learned behavior can only ever change *suggestions* and *defaults* — it can NEVER lower a permission tier, grant new access, or skip a Tier 2/3 confirmation (those remain governed solely by Section 8, R-1–R-6). All learned preferences are visible, editable, and erasable in the UI (same as long-term memory), so you can always see *why* JARVIS suggested something and correct it.
 
 ### 3.3 Non-Goals
 - JARVIS is **not** a public/multi-user product (v1). It is single-user, built for you.
