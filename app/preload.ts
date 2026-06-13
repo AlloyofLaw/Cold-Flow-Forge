@@ -9,6 +9,7 @@ import type { AgentResponse } from "../core/agent";
 import type { ConfirmationDecision, ConfirmationRequest } from "../core/permissions";
 import type { ConversationMessage } from "../store/conversations";
 import type { ActivityLogEntry } from "../store/activityLog";
+import type { TotpSetup } from "../security/totp";
 
 /** A pending confirmation request sent from the main process (R-2). */
 export interface ConfirmationRequestEvent {
@@ -48,8 +49,17 @@ export interface JarvisBridge {
    * unsubscribe function.
    */
   onConfirmationRequest(callback: (event: ConfirmationRequestEvent) => void): () => void;
-  /** Send the user's confirm/cancel decision back to the main process. */
-  sendConfirmationDecision(id: string, decision: ConfirmationDecision): void;
+  /**
+   * Send the user's confirm/cancel decision back to the main process. For
+   * Tier 3 requests (`request.requiresTotp`), also pass the 6-digit TOTP
+   * code the user typed into the confirmation UI (R-2a, SEC-6 - never
+   * spoken).
+   */
+  sendConfirmationDecision(id: string, decision: ConfirmationDecision, totpCode?: string): void;
+  /** R-2a one-time setup: generate a new TOTP secret and return the otpauth:// URI + base32 secret. */
+  setupTotp(): Promise<TotpSetup>;
+  /** R-2a: whether two-factor confirmation has been set up yet. */
+  getTotpStatus(): Promise<{ configured: boolean }>;
 }
 
 const jarvisBridge: JarvisBridge = {
@@ -62,9 +72,11 @@ const jarvisBridge: JarvisBridge = {
     ipcRenderer.on(IPC_CHANNELS.confirmationRequest, listener);
     return () => ipcRenderer.removeListener(IPC_CHANNELS.confirmationRequest, listener);
   },
-  sendConfirmationDecision: (id, decision) => {
-    ipcRenderer.send(IPC_CHANNELS.confirmationDecision, { id, decision });
+  sendConfirmationDecision: (id, decision, totpCode) => {
+    ipcRenderer.send(IPC_CHANNELS.confirmationDecision, { id, decision, totpCode });
   },
+  setupTotp: () => ipcRenderer.invoke(IPC_CHANNELS.totpSetup),
+  getTotpStatus: () => ipcRenderer.invoke(IPC_CHANNELS.totpStatus),
 };
 
 contextBridge.exposeInMainWorld("jarvis", jarvisBridge);

@@ -70,6 +70,20 @@
         <h2 id="confirmation-title">JARVIS needs your confirmation</h2>
         <p class="confirmation-tier" id="confirmation-tier"></p>
         <p class="confirmation-description" id="confirmation-description"></p>
+        <div class="confirmation-totp" id="confirmation-totp" hidden>
+          <label for="confirmation-totp-input">
+            Two-factor code (from Google Authenticator) - required for this action (R-2a). Never speak this code aloud.
+          </label>
+          <input
+            type="text"
+            id="confirmation-totp-input"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="6"
+            placeholder="6-digit code"
+            autocomplete="one-time-code"
+          />
+        </div>
         <div class="confirmation-actions">
           <button type="button" class="btn-cancel" id="confirmation-cancel">Cancel</button>
           <button type="button" class="btn-confirm" id="confirmation-confirm">Confirm</button>

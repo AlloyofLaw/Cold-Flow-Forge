@@ -18,6 +18,7 @@ import { getTodayCost, getBudgetStatus } from "../store/costLedger";
 import { config } from "../config";
 import { getVoiceAdapter } from "../voice";
 import { registerAllSkills } from "../skills";
+import { generateTotpSecret, isTotpConfigured } from "../security/totp";
 import { IPC_CHANNELS } from "./ipcChannels";
 
 let mainWindow: BrowserWindow | undefined;
@@ -33,6 +34,14 @@ let activeSessionId: string;
  */
 class ElectronConfirmationProvider implements ConfirmationProvider {
   private readonly pending = new Map<string, (decision: ConfirmationDecision) => void>();
+  /**
+   * R-2a: the TOTP code (if any) the user entered alongside their
+   * confirm/cancel decision for the most recently resolved request, keyed by
+   * request id. `getTotpCode` reads (and clears) this after
+   * `requestConfirmation` resolves. Never read from anywhere else - SEC-6
+   * requires the code come only from this explicit UI-entered channel.
+   */
+  private readonly totpCodes = new Map<string, string | undefined>();
 
   constructor(private readonly getWindow: () => BrowserWindow | undefined) {}
 
@@ -45,16 +54,38 @@ class ElectronConfirmationProvider implements ConfirmationProvider {
 
     const id = randomUUID();
     return new Promise<ConfirmationDecision>((resolve) => {
-      this.pending.set(id, resolve);
+      this.pending.set(id, (decision) => {
+        this.lastResolvedId = id;
+        resolve(decision);
+      });
       window.webContents.send(IPC_CHANNELS.confirmationRequest, { id, request });
     });
   }
 
-  /** Resolve a pending confirmation request with the user's decision. */
-  resolve(id: string, decision: ConfirmationDecision): void {
+  /** Tracks the id of the most recently resolved request, for `getTotpCode`. */
+  private lastResolvedId: string | undefined;
+
+  /**
+   * R-2a / SEC-6: returns the TOTP code the user typed into the
+   * confirmation UI alongside their decision for the most recently resolved
+   * request, or `undefined` if none was provided (e.g. Tier 0-2 requests
+   * never send one).
+   */
+  async getTotpCode(_request: ConfirmationRequest): Promise<string | undefined> {
+    const id = this.lastResolvedId;
+    if (!id) return undefined;
+    const code = this.totpCodes.get(id);
+    this.totpCodes.delete(id);
+    this.lastResolvedId = undefined;
+    return code;
+  }
+
+  /** Resolve a pending confirmation request with the user's decision (and, for Tier 3, their TOTP code). */
+  resolve(id: string, decision: ConfirmationDecision, totpCode?: string): void {
     const resolver = this.pending.get(id);
     if (!resolver) return;
     this.pending.delete(id);
+    this.totpCodes.set(id, totpCode);
     resolver(decision);
   }
 }
@@ -81,13 +112,26 @@ function registerIpcHandlers(): void {
     return handleUserMessage(activeSessionId, message, confirmationProvider);
   });
 
-  // Renderer -> main: resolve a pending confirmation request (R-2, R-6).
+  // Renderer -> main: resolve a pending confirmation request (R-2, R-6),
+  // optionally with a TOTP code for Tier 3 requests (R-2a).
   ipcMain.on(
     IPC_CHANNELS.confirmationDecision,
-    (_event, payload: { id: string; decision: ConfirmationDecision }) => {
-      confirmationProvider.resolve(payload.id, payload.decision);
+    (_event, payload: { id: string; decision: ConfirmationDecision; totpCode?: string }) => {
+      confirmationProvider.resolve(payload.id, payload.decision, payload.totpCode);
     },
   );
+
+  // R-2a one-time setup: generate a new TOTP secret and return the
+  // otpauth:// URI + base32 secret for the user to add to Google
+  // Authenticator. Re-running this generates a NEW secret.
+  ipcMain.handle(IPC_CHANNELS.totpSetup, async () => {
+    return generateTotpSecret();
+  });
+
+  // R-2a: whether two-factor confirmation has been set up yet.
+  ipcMain.handle(IPC_CHANNELS.totpStatus, async () => {
+    return { configured: await isTotpConfigured() };
+  });
 
   ipcMain.handle(IPC_CHANNELS.getHistory, async () => {
     return getSessionMessages(activeSessionId);

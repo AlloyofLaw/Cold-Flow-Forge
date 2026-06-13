@@ -288,6 +288,30 @@ code {
   white-space: pre-wrap;
 }
 
+.confirmation-totp {
+  margin: 0 0 16px;
+}
+
+.confirmation-totp label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.confirmation-totp input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: inherit;
+  font-size: 1.1rem;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
 .confirmation-actions {
   display: flex;
   justify-content: flex-end;

@@ -29,6 +29,7 @@
 import { randomUUID } from "node:crypto";
 import { think, type BrainTool, type ConversationTurn, type ToolExecutionResult } from "./brain";
 import {
+  assertTierThreeTwoFactorSatisfied,
   classifyTool,
   describeToolCall,
   isPauseModeActive,
@@ -45,6 +46,7 @@ import { skillRegistry } from "../skills/registry";
 import { recordMessage, getSessionMessages } from "../store/conversations";
 import { recordActivity, type ActivityOutcome } from "../store/activityLog";
 import { getSetting } from "../store/settings";
+import { isTotpConfigured, verifyTotpCode, TOTP_NOT_CONFIGURED_MESSAGE } from "../security/totp";
 
 export interface AgentResponse {
   sessionId: string;
@@ -199,34 +201,70 @@ function buildToolExecutor(sessionId: string, confirmationProvider: Confirmation
     }
 
     // R-1/R-2/R-6: pause and ask for confirmation if this tier requires it.
+    // R-2a: Tier 3 ALSO requires a verified TOTP authenticator code, entered
+    // in the UI (never spoken), in addition to the confirm/cancel decision.
     let confirmationDecision: ConfirmationDecision | undefined;
+    let totpVerified = false;
     if (requiresConfirmation(tier)) {
       const description = describeToolCall({ skill: skillId, tool: toolName }, args);
-      confirmationDecision = await confirmationProvider.requestConfirmation({
+      const requiresTotp = tier === PermissionTier.FinancialOrIrreversible;
+
+      const confirmationRequest = {
         tool: { skill: skillId, tool: toolName },
         tier,
         description,
         args,
-      });
+        requiresTotp,
+      };
+
+      confirmationDecision = await confirmationProvider.requestConfirmation(confirmationRequest);
+
+      // R-2a: for Tier 3, also collect and verify the TOTP code BEFORE
+      // recording the confirmation outcome, so the activity log reflects
+      // whether two-factor was actually satisfied.
+      let totpRefusalReason: string | undefined;
+      if (requiresTotp && confirmationDecision === "approved") {
+        const configured = await isTotpConfigured();
+        if (!configured) {
+          totpRefusalReason = TOTP_NOT_CONFIGURED_MESSAGE;
+        } else {
+          const totpCode = await confirmationProvider.getTotpCode?.(confirmationRequest);
+          totpVerified = totpCode !== undefined && (await verifyTotpCode(totpCode));
+          if (!totpVerified) {
+            totpRefusalReason =
+              "The TOTP authenticator code was missing or incorrect. Tier 3 actions require a valid " +
+              "6-digit code from your authenticator app in addition to confirmation (R-2a).";
+          }
+        }
+      }
+
+      const approvedWithTwoFactor = shouldProceedAfterConfirmation(tier, confirmationDecision, totpVerified);
 
       recordActivity({
         skill: skillId,
         tool: toolName,
         tier,
         params: { sessionId, args },
-        outcome: confirmationDecision === "approved" ? "success" : "denied",
-        summary:
-          confirmationDecision === "approved"
-            ? `Confirmed: ${description}`
+        outcome: approvedWithTwoFactor ? "success" : "denied",
+        summary: approvedWithTwoFactor
+          ? `Confirmed: ${description}`
+          : confirmationDecision === "approved" && requiresTotp
+            ? `Cancelled (not run): ${description}. ${totpRefusalReason}`
             : `Cancelled (not run): ${description}`,
       });
 
-      if (!shouldProceedAfterConfirmation(tier, confirmationDecision)) {
-        return {
-          content: `Cancelled - "${skillId}.${toolName}" was not run because the user did not confirm it.`,
-          isError: true,
-        };
+      if (!approvedWithTwoFactor) {
+        const message =
+          confirmationDecision === "approved" && requiresTotp && totpRefusalReason
+            ? `Cancelled - "${skillId}.${toolName}" was not run. ${totpRefusalReason}`
+            : `Cancelled - "${skillId}.${toolName}" was not run because the user did not confirm it.`;
+        return { content: message, isError: true };
       }
+
+      // R-2a: belt-and-suspenders - this throws if somehow both factors were
+      // not actually satisfied, so a Tier 3 action can never reach the
+      // dispatch below without both (R-1, R-2a).
+      assertTierThreeTwoFactorSatisfied(tier, confirmationDecision, totpVerified);
     }
 
     let outcome: ActivityOutcome = "success";

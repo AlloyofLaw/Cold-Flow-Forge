@@ -5,7 +5,18 @@ import path from "node:path";
 // Force the local-file fallback backend so this test is deterministic in
 // headless/CI environments without a Secret Service / Keychain daemon
 // (PRD SEC-1, Phase 0 acceptance criterion #5).
+//
+// Use a dedicated vault directory for this file (via `vaultDir`) so it never
+// shares an on-disk vault file/key with other test files that also use the
+// file-vault backend (e.g. test/totp.test.ts) - vitest runs test files in
+// parallel by default, and a shared file would race.
+//
+// `vi.mock` factories are hoisted above all other statements in the file, so
+// the vault directory path is recomputed inline here (and again below for use
+// in this file's own cleanup helpers) rather than shared via a top-level
+// const.
 vi.mock("../config", async () => {
+  const path = await import("node:path");
   const actual = await vi.importActual<typeof import("../config")>("../config");
   return {
     ...actual,
@@ -13,11 +24,12 @@ vi.mock("../config", async () => {
       ...actual.config,
       vaultBackend: "file",
       vaultDevPassphrase: "test-passphrase-for-vault-spec",
+      vaultDir: path.resolve(__dirname, "..", "data", ".vault-test-vault"),
     },
   };
 });
 
-const VAULT_DIR = path.resolve(__dirname, "..", "data");
+const VAULT_DIR = path.resolve(__dirname, "..", "data", ".vault-test-vault");
 const VAULT_FILE = path.join(VAULT_DIR, ".jarvis-dev-vault.json");
 const VAULT_KEY_FILE = path.join(VAULT_DIR, ".jarvis-dev-vault.key");
 
@@ -25,6 +37,7 @@ function cleanupVaultFiles(): void {
   for (const file of [VAULT_FILE, VAULT_KEY_FILE]) {
     if (fs.existsSync(file)) fs.unlinkSync(file);
   }
+  if (fs.existsSync(VAULT_DIR)) fs.rmSync(VAULT_DIR, { recursive: true, force: true });
 }
 
 beforeEach(() => {

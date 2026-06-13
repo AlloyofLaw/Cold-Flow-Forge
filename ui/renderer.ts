@@ -163,10 +163,25 @@ function setupForm(): void {
  * shown here with its plain-language description and tier, and the user's
  * click is sent back via `sendConfirmationDecision`.
  */
+/**
+ * Wire the Confirm/Cancel modal (R-2, FR-2.5): every pending confirmation
+ * request from the main process (a Tier 1+ tool call that needs the user's
+ * decision before it runs - see app/main.ts ElectronConfirmationProvider) is
+ * shown here with its plain-language description and tier, and the user's
+ * click is sent back via `sendConfirmationDecision`.
+ *
+ * R-2a / SEC-6: when `request.requiresTotp` is true (Tier 3 only), an
+ * additional text field for a 6-digit Google Authenticator code is shown.
+ * This code is NEVER spoken - it must be typed here. Both the "Confirm"
+ * click AND a valid code are required before the action executes
+ * (core/agent.ts enforces this server-side regardless of what the UI sends).
+ */
 function setupConfirmationPrompt(): void {
   const overlay = byId<HTMLElement>("confirmation-overlay");
   const tierEl = byId<HTMLElement>("confirmation-tier");
   const descriptionEl = byId<HTMLElement>("confirmation-description");
+  const totpContainer = byId<HTMLElement>("confirmation-totp");
+  const totpInput = byId<HTMLInputElement>("confirmation-totp-input");
   const confirmButton = byId<HTMLButtonElement>("confirmation-confirm");
   const cancelButton = byId<HTMLButtonElement>("confirmation-cancel");
 
@@ -176,17 +191,22 @@ function setupConfirmationPrompt(): void {
     activeRequestId = event.id;
     tierEl.textContent = `Tier ${event.request.tier} - ${tierLabel(event.request.tier)}`;
     descriptionEl.textContent = event.request.description;
+    totpContainer.hidden = !event.request.requiresTotp;
+    totpInput.value = "";
     overlay.hidden = false;
+    if (event.request.requiresTotp) totpInput.focus();
   }
 
   function hide(): void {
     activeRequestId = undefined;
+    totpInput.value = "";
     overlay.hidden = true;
   }
 
   function respond(decision: "approved" | "denied"): void {
     if (!activeRequestId) return;
-    window.jarvis.sendConfirmationDecision(activeRequestId, decision);
+    const totpCode = totpContainer.hidden ? undefined : totpInput.value.trim() || undefined;
+    window.jarvis.sendConfirmationDecision(activeRequestId, decision, totpCode);
     hide();
     void Promise.all([refreshActivityLog(), refreshStatus()]);
   }

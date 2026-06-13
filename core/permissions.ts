@@ -365,12 +365,19 @@ export interface ConfirmationRequest {
   description: string;
   /** The (validated) arguments that would be passed to the tool. */
   args: Record<string, unknown>;
+  /**
+   * R-2a: whether this request ALSO requires a TOTP authenticator code,
+   * entered in the UI (never spoken - SEC-6), in addition to the voice/UI
+   * "confirm". Always `true` for Tier 3, always `false` for Tier 0-2.
+   */
+  requiresTotp: boolean;
 }
 
 /**
  * Pluggable confirmation delivery (R-2, SEC-6):
- *   - The Electron UI implements this by showing a Confirm/Cancel prompt and
- *     waiting for the user's click (real IPC round-trip).
+ *   - The Electron UI implements this by showing a Confirm/Cancel prompt
+ *     (plus a TOTP code field when `requiresTotp` is true) and waiting for
+ *     the user's click (real IPC round-trip).
  *   - Tests inject a fake provider that auto-confirms or auto-cancels, so the
  *     confirmation flow can be exercised headlessly.
  *
@@ -380,6 +387,25 @@ export interface ConfirmationRequest {
  */
 export interface ConfirmationProvider {
   requestConfirmation(request: ConfirmationRequest): Promise<ConfirmationDecision>;
+  /**
+   * R-2a / SEC-6: for Tier 3 requests (`requiresTotp: true`), return the
+   * 6-digit TOTP code the user entered in the UI alongside their
+   * confirm/cancel decision, or `undefined` if none was provided.
+   *
+   * This is a SEPARATE method (not a field on the confirm/cancel decision)
+   * so that:
+   *   - Providers that never handle Tier 3 (most test fakes) don't need to
+   *     implement it at all - `getTotpCode` is optional, and a missing
+   *     implementation means "no code provided", which fails Tier 3 closed
+   *     (R-1/R-2a).
+   *   - The TOTP code is NEVER read from `request.args` or any
+   *     skill-/model-supplied data (FR-2.7) - only from this explicit,
+   *     human-entered-in-the-UI channel.
+   *
+   * Called only for requests where `requiresTotp` is true, immediately after
+   * `requestConfirmation` resolves.
+   */
+  getTotpCode?(request: ConfirmationRequest): Promise<string | undefined>;
 }
 
 /**
@@ -391,6 +417,36 @@ export interface ConfirmationProvider {
 export function assertTierThreeNeverAutoApproved(tier: PermissionTier, decision: ConfirmationDecision): void {
   if (tier === PermissionTier.FinancialOrIrreversible && decision !== "approved" && decision !== "denied") {
     throw new Error("Tier 3 actions must receive an explicit approve/deny decision - never auto-approved (R-1).");
+  }
+}
+
+/**
+ * R-2a / SEC-6 (hardcoded, not configurable): a Tier 3 action can NEVER
+ * execute without BOTH:
+ *   - an explicit "approved" confirmation decision (R-1/R-2), AND
+ *   - a verified TOTP code (`totpVerified === true`), checked by the caller
+ *     via `security/totp.ts`'s `verifyTotpCode` against the human-entered
+ *     code returned from `ConfirmationProvider.getTotpCode`.
+ *
+ * This function is the single choke point core/agent.ts must call before
+ * dispatching a Tier 3 tool call - it throws if the two-factor requirement
+ * is not fully satisfied, so a Tier 3 action literally cannot execute via the
+ * code path without both factors (R-2a).
+ *
+ * No-op for Tier 0-2 (which have no TOTP requirement).
+ */
+export function assertTierThreeTwoFactorSatisfied(
+  tier: PermissionTier,
+  decision: ConfirmationDecision,
+  totpVerified: boolean,
+): void {
+  if (tier !== PermissionTier.FinancialOrIrreversible) return;
+
+  if (decision !== "approved" || !totpVerified) {
+    throw new Error(
+      "Tier 3 actions require BOTH an explicit 'approved' confirmation AND a verified TOTP " +
+        "authenticator code (R-2a/SEC-6) - this action cannot execute without both.",
+    );
   }
 }
 
@@ -410,9 +466,18 @@ export function assertTierThreeNeverAutoApproved(tier: PermissionTier, decision:
 export function shouldProceedAfterConfirmation(
   tier: PermissionTier,
   decision: ConfirmationDecision | undefined,
+  totpVerified?: boolean,
 ): boolean {
   if (!requiresConfirmation(tier)) return true;
-  return decision === "approved";
+  if (decision !== "approved") return false;
+
+  // R-2a: Tier 3 ALSO requires a verified TOTP code, in addition to the
+  // "approved" confirmation decision. Tier 1/2 are unaffected.
+  if (tier === PermissionTier.FinancialOrIrreversible) {
+    return totpVerified === true;
+  }
+
+  return true;
 }
 
 /**

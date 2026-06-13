@@ -55,9 +55,17 @@ function loadKeytar(): KeytarModule | null {
 // Local-file fallback vault
 // ---------------------------------------------------------------------------
 
-const VAULT_DIR = path.join(PROJECT_ROOT, "data");
-const VAULT_FILE = path.join(VAULT_DIR, ".jarvis-dev-vault.json");
-const VAULT_KEY_FILE = path.join(VAULT_DIR, ".jarvis-dev-vault.key");
+function vaultDir(): string {
+  return config.vaultDir || path.join(PROJECT_ROOT, "data");
+}
+
+function vaultFile(): string {
+  return path.join(vaultDir(), ".jarvis-dev-vault.json");
+}
+
+function vaultKeyFile(): string {
+  return path.join(vaultDir(), ".jarvis-dev-vault.key");
+}
 
 interface EncryptedRecord {
   iv: string; // base64
@@ -80,29 +88,31 @@ function getFileVaultKey(): Buffer {
     return crypto.scryptSync(config.vaultDevPassphrase, SERVICE_NAME, 32);
   }
 
-  fs.mkdirSync(VAULT_DIR, { recursive: true });
+  fs.mkdirSync(vaultDir(), { recursive: true });
 
-  if (fs.existsSync(VAULT_KEY_FILE)) {
-    return Buffer.from(fs.readFileSync(VAULT_KEY_FILE, "utf8"), "hex");
+  const keyFile = vaultKeyFile();
+  if (fs.existsSync(keyFile)) {
+    return Buffer.from(fs.readFileSync(keyFile, "utf8"), "hex");
   }
 
   const key = crypto.randomBytes(32);
-  fs.writeFileSync(VAULT_KEY_FILE, key.toString("hex"), { mode: 0o600 });
+  fs.writeFileSync(keyFile, key.toString("hex"), { mode: 0o600 });
   return key;
 }
 
 function readVaultFile(): VaultFileContents {
-  if (!fs.existsSync(VAULT_FILE)) return {};
+  const file = vaultFile();
+  if (!fs.existsSync(file)) return {};
   try {
-    return JSON.parse(fs.readFileSync(VAULT_FILE, "utf8")) as VaultFileContents;
+    return JSON.parse(fs.readFileSync(file, "utf8")) as VaultFileContents;
   } catch {
     return {};
   }
 }
 
 function writeVaultFile(contents: VaultFileContents): void {
-  fs.mkdirSync(VAULT_DIR, { recursive: true });
-  fs.writeFileSync(VAULT_FILE, JSON.stringify(contents, null, 2), { mode: 0o600 });
+  fs.mkdirSync(vaultDir(), { recursive: true });
+  fs.writeFileSync(vaultFile(), JSON.stringify(contents, null, 2), { mode: 0o600 });
 }
 
 function fileGetSecret(account: string): string | undefined {

@@ -76,6 +76,14 @@ export interface JarvisConfig {
   vaultBackend: VaultBackend;
   /** Passphrase for the local-file vault fallback (dev/test only). */
   vaultDevPassphrase: string | undefined;
+  /**
+   * Directory holding the local-file vault fallback's files
+   * (`.jarvis-dev-vault.json` / `.jarvis-dev-vault.key`). Defaults to
+   * `<PROJECT_ROOT>/data`. Overridable via `JARVIS_VAULT_DIR` so test suites
+   * can point at isolated temp directories and avoid cross-file races on a
+   * shared vault file.
+   */
+  vaultDir: string;
   /** Absolute path to the SQLite database file. */
   dbPath: string;
   /** Voice adapter selection (Phase 0 only supports "text"/"stub"). */
@@ -153,6 +161,9 @@ function buildConfig(env: NodeJS.ProcessEnv): JarvisConfig {
     monthlyBudgetUsd: readNumber(env.JARVIS_MONTHLY_BUDGET_USD, DEFAULT_MONTHLY_BUDGET_USD),
     vaultBackend: readVaultBackend(env.JARVIS_VAULT_BACKEND?.trim()),
     vaultDevPassphrase: env.JARVIS_VAULT_DEV_PASSPHRASE?.trim() || undefined,
+    vaultDir: env.JARVIS_VAULT_DIR?.trim()
+      ? path.resolve(env.JARVIS_VAULT_DIR.trim())
+      : path.join(PROJECT_ROOT, "data"),
     dbPath: env.JARVIS_DB_PATH?.trim()
       ? path.resolve(env.JARVIS_DB_PATH.trim())
       : DEFAULT_DB_PATH,

@@ -22,6 +22,7 @@
     "dotenv": "^17.2.3",
     "googleapis": "^160.0.0",
     "googleapis-common": "^8.0.2",
+    "otplib": "^13.4.1",
     "stripe": "^18.5.0"
   },
   "optionalDependencies": {
