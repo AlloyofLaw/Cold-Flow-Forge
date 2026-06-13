@@ -112,6 +112,26 @@ export async function getStripeClient(): Promise<Stripe | undefined> {
 }
 
 /**
+ * FR-5.4 hard block: tool names that must NEVER be registered by the Stripe
+ * skill, regardless of phase or configuration. Creating new charges,
+ * changing payout/bank details, modifying account settings, and API-key
+ * management are explicitly out of scope - this denylist is checked by a
+ * test (test/stripe.test.ts) against the live tool registry, so adding any
+ * such tool in the future will fail CI rather than silently slipping in.
+ */
+export const FR_5_4_DENYLIST_SUBSTRINGS: readonly string[] = [
+  "create_charge",
+  "create_payment",
+  "payout",
+  "account_update",
+  "update_account",
+  "api_key",
+  "apikey",
+  "bank_account",
+  "bank_detail",
+];
+
+/**
  * Whether the currently-configured Stripe key (if any) is in TEST mode.
  * Used by server.ts to label stub/real responses and by tests. Returns
  * `undefined` if no key is configured at all.

@@ -6,7 +6,8 @@
 // resolved by skills/stripe/client.ts, which also enforces the TEST-MODE
 // safety rail (FR-5.6).
 //
-// Tools exposed (ALL READ-ONLY, Tier 0, FR-5.2):
+// Tools exposed:
+//   READ (ALL READ-ONLY, Tier 0, FR-5.2):
 //   - get_balance:     available/pending balance, by currency.
 //   - list_charges:    recent charges/payments.
 //   - list_payouts:    recent payouts.
@@ -14,23 +15,37 @@
 //   - list_disputes:   open/recent disputes.
 //   - list_invoices:   recent invoices.
 //
+//   WRITE (Tier 3, FR-5.3, Phase 4):
+//   - refund_charge:       fully or partially refund a charge. ALWAYS Tier 3
+//                           - moves real money, cannot be undone.
+//   - cancel_subscription: cancel a subscription. ALWAYS Tier 3 - stops
+//                           recurring billing, hard to reverse cleanly.
+//   Both require the standard Tier 3 two-factor confirmation (R-2a, SEC-6):
+//   an explicit "confirm" decision AND a valid TOTP authenticator code,
+//   enforced by core/agent.ts before either tool is dispatched. Neither tool
+//   has (or should ever have) a CLASSIFIER_HOOK - they are statically Tier 3
+//   regardless of arguments (mirrors gmail.send_email's "always Tier 2, no
+//   downgrade" pattern, one tier stricter).
+//
 // FR-5.5: every monetary figure is converted from Stripe's integer "cents"
 // (smallest currency unit) to a decimal amount + currency code in this
 // skill, NOT left to the model - e.g. `{ amount: 13.00, currency: "usd" }`
 // rather than a raw `1300`. This avoids "$1,300 vs $13,000" misreadings.
+// `refund_charge` accepts an OPTIONAL `amount` in DOLLARS (not cents) for a
+// partial refund; if omitted, the full remaining charge amount is refunded.
 //
-// EXPLICITLY NOT IMPLEMENTED, ON PURPOSE (FR-5.3/5.4, Phase 4):
-//   - No refunds, subscription changes, customer updates, invoice
-//     creation/sending, new charges, payout/bank-detail changes, or any
-//     account/API-key management. There is NO write tool of any kind in
-//     this skill. Adding one is explicitly out of scope for Phase 3 and must
-//     go through Tier 3 (strictest confirmation) in a later phase.
+// FR-5.4 HARD BLOCK, still true in Phase 4 - EXPLICITLY NOT IMPLEMENTED:
+//   - No tool to create new charges/payments, change payout or bank
+//     details, modify account settings, or manage API keys. See
+//     client.ts's FR_5_4_DENYLIST_SUBSTRINGS and test/stripe.test.ts for the
+//     enforcement test against this server's registered tool names.
 //
 // Stub mode (no Stripe API key configured, OR a live-mode key without
 // STRIPE_ALLOW_LIVE_MODE - see client.ts): every tool still registers and
 // returns a clearly-labeled stub/empty result instead of throwing, with zero
 // network calls - mirroring skills/google-calendar/server.ts and
-// skills/gmail/server.ts.
+// skills/gmail/server.ts. For refund_charge/cancel_subscription, the stub
+// result is clearly labeled `stub: true` and makes NO real API call.
 //
 // This server is run IN-PROCESS (see index.ts), connected to its client via
 // `InMemoryTransport`, exactly like the other built-in skills.
@@ -385,6 +400,140 @@ export function createStripeServer(): McpServer {
       } catch (error) {
         return {
           content: [{ type: "text", text: `Failed to list Stripe invoices: ${(error as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  server.registerTool(
+    "refund_charge",
+    {
+      title: "Refund a Stripe charge",
+      description:
+        "Refund a Stripe charge, fully or partially (Tier 3, FR-5.3 - moves real money, cannot be " +
+        "undone). Pass `chargeId` (the Stripe charge id) and an OPTIONAL `amount` in DOLLARS (NOT " +
+        "cents) for a partial refund - if `amount` is omitted, the full remaining charge amount is " +
+        "refunded. Requires the user's explicit confirmation AND a valid TOTP authenticator code " +
+        "(R-2a) before this runs.",
+      inputSchema: {
+        chargeId: z.string().min(1).describe("The Stripe charge id to refund (e.g. 'ch_...')."),
+        amount: z
+          .number()
+          .positive()
+          .optional()
+          .describe("Amount to refund in DOLLARS (not cents). Omit for a full refund."),
+      },
+    },
+    async ({ chargeId, amount }) => {
+      const stripe = await getStripeClient();
+      if (!stripe) {
+        const stubAmount: MoneyAmount = { amount: amount ?? 0, currency: "usd" };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                stub: true,
+                notice: STUB_NOTICE,
+                testMode: undefined,
+                refund: {
+                  id: "re_stub",
+                  chargeId,
+                  amount: stubAmount,
+                  full: amount === undefined,
+                  status: "stub",
+                },
+              }),
+            },
+          ],
+        };
+      }
+
+      try {
+        const params: Stripe.RefundCreateParams = { charge: chargeId };
+        if (amount !== undefined) {
+          // Convert DOLLARS (tool input, FR-5.5) to Stripe's integer cents.
+          params.amount = Math.round(amount * 100);
+        }
+
+        const refund = await stripe.refunds.create(params);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                stub: false,
+                testMode: await isConfiguredKeyTestMode(),
+                refund: {
+                  id: refund.id,
+                  chargeId,
+                  amount: toMoneyAmount(refund.amount, refund.currency),
+                  full: amount === undefined,
+                  status: refund.status,
+                },
+              }),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Failed to refund Stripe charge ${chargeId}: ${(error as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  server.registerTool(
+    "cancel_subscription",
+    {
+      title: "Cancel a Stripe subscription",
+      description:
+        "Cancel a Stripe subscription immediately (Tier 3, FR-5.3 - stops recurring billing, cannot " +
+        "be undone). Pass `subscriptionId` (the Stripe subscription id). Requires the user's " +
+        "explicit confirmation AND a valid TOTP authenticator code (R-2a) before this runs.",
+      inputSchema: {
+        subscriptionId: z.string().min(1).describe("The Stripe subscription id to cancel (e.g. 'sub_...')."),
+      },
+    },
+    async ({ subscriptionId }) => {
+      const stripe = await getStripeClient();
+      if (!stripe) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                stub: true,
+                notice: STUB_NOTICE,
+                testMode: undefined,
+                subscription: { id: subscriptionId, status: "stub_canceled" },
+              }),
+            },
+          ],
+        };
+      }
+
+      try {
+        const subscription = await stripe.subscriptions.cancel(subscriptionId);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                stub: false,
+                testMode: await isConfiguredKeyTestMode(),
+                subscription: { id: subscription.id, status: subscription.status },
+              }),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            { type: "text", text: `Failed to cancel Stripe subscription ${subscriptionId}: ${(error as Error).message}` },
+          ],
           isError: true,
         };
       }

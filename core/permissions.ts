@@ -9,6 +9,9 @@
 // plug straight in.
 // ---------------------------------------------------------------------------
 
+import { existsSync } from "node:fs";
+import { resolveFilesystemWriteTarget } from "../skills/filesystem/paths";
+
 /**
  * Tier 0 - Read-only: no confirmation needed.
  * Tier 1 - Reversible & internal: no confirmation by default (configurable).
@@ -156,6 +159,38 @@ export const TIER_ASSIGNMENTS: TierAssignments = {
     list_customers: PermissionTier.ReadOnly,
     list_disputes: PermissionTier.ReadOnly,
     list_invoices: PermissionTier.ReadOnly,
+    // refund_charge / cancel_subscription are ALWAYS Tier 3 (FR-5.3, R-2,
+    // R-2a) - moving real money or cancelling recurring billing is
+    // financial and cannot be undone, regardless of arguments. No
+    // classifier hook exists for either, and none should ever be added
+    // (R-6): unlike the calendar attendee-aware tiers, there is no "safe"
+    // set of arguments that downgrades these below Tier 3.
+    refund_charge: PermissionTier.FinancialOrIrreversible,
+    cancel_subscription: PermissionTier.FinancialOrIrreversible,
+  },
+  // Local Filesystem skill (FR-6.1..6.7, Phase 4 Part C). All tools operate
+  // ONLY within the configured allowed root (config.allowedDirectory,
+  // skills/filesystem/paths.ts's resolveWithinRoot).
+  filesystem: {
+    // Read-only (FR-6.1/6.2): no confirmation needed.
+    list_directory: PermissionTier.ReadOnly,
+    read_file: PermissionTier.ReadOnly,
+    get_file_info: PermissionTier.ReadOnly,
+    // create_directory always creates something new (or no-ops if it
+    // already exists as a directory) - reversible & internal (FR-6.3).
+    create_directory: PermissionTier.ReversibleInternal,
+    // write_file and move/rename are STATE-DEPENDENT (FR-6.3/6.5): creating
+    // a new path is Tier 1, overwriting an existing path is Tier 2. See
+    // CLASSIFIER_HOOKS.filesystem below - these static entries are the
+    // Tier-1 (no-overwrite) fallback if a hook is somehow not consulted.
+    write_file: PermissionTier.ReversibleInternal,
+    move: PermissionTier.ReversibleInternal,
+    // delete_file / delete_directory move the target into .jarvis-trash/
+    // (FR-6.5's backup/undo snapshot) rather than truly deleting it, but
+    // still require confirmation (Tier 2) - NOT Tier 3, since they are
+    // recoverable.
+    delete_file: PermissionTier.ExternalOrHardToReverse,
+    delete_directory: PermissionTier.ExternalOrHardToReverse,
   },
 };
 
@@ -208,7 +243,35 @@ export const CLASSIFIER_HOOKS: ClassifierHooks = {
     update_event: (args) =>
       hasAttendees(args) ? PermissionTier.ExternalOrHardToReverse : PermissionTier.ReversibleInternal,
   },
+  // Local Filesystem skill (FR-6.3/6.5): write_file and move/rename are
+  // Tier 1 ("reversible & internal", no confirmation) when the target path
+  // does NOT yet exist (creating something new), but Tier 2 ("external-
+  // facing or hard to reverse", confirmation required) when it WOULD
+  // overwrite an existing file/directory. This is a cheap, synchronous,
+  // local `fs.existsSync` check (not a network call), done here so the
+  // tool-use loop (core/agent.ts) classifies BEFORE dispatching the call -
+  // mirroring the calendar attendee-aware hooks above.
+  filesystem: {
+    write_file: (args) => filesystemOverwriteTier(args, "path"),
+    move: (args) => filesystemOverwriteTier(args, "destination"),
+  },
 };
+
+/**
+ * Tier for a filesystem write that may overwrite an existing path: Tier 2
+ * if the (resolved, in-bounds) target path already exists, Tier 1 if it
+ * doesn't exist yet or can't be resolved within the allowed root (in which
+ * case the tool itself will refuse - no overwrite is possible, so Tier 1's
+ * "no confirmation" is safe; the tool call will simply fail with a clear
+ * error).
+ */
+function filesystemOverwriteTier(args: Record<string, unknown>, argKey: string): PermissionTier {
+  const requested = args[argKey];
+  const resolved = resolveFilesystemWriteTarget(requested);
+  if (!resolved) return PermissionTier.ReversibleInternal;
+
+  return existsSync(resolved) ? PermissionTier.ExternalOrHardToReverse : PermissionTier.ReversibleInternal;
+}
 
 // ---------------------------------------------------------------------------
 // Plain-language descriptions for confirmation prompts (R-2).
@@ -248,6 +311,12 @@ export function describeToolCall({ skill, tool }: ToolIdentifier, args: Record<s
   }
   if (skill === "gmail") {
     return describeGmailToolCall(tool, args);
+  }
+  if (skill === "stripe") {
+    return describeStripeToolCall(tool, args);
+  }
+  if (skill === "filesystem") {
+    return describeFilesystemToolCall(tool, args);
   }
   return `Run "${skill}.${tool}" with arguments: ${JSON.stringify(args)}`;
 }
@@ -339,6 +408,79 @@ function describeGmailToolCall(tool: string, args: Record<string, unknown>): str
     }
     default:
       return `Run gmail.${tool} with arguments: ${JSON.stringify(args)}`;
+  }
+}
+
+/**
+ * Format a dollar amount for display, e.g. 25.5 -> "$25.50". Uses
+ * toFixed(2) - the same "decimal amount + currency code" convention as
+ * skills/stripe/server.ts's `toMoneyAmount` (FR-5.5), just formatted for a
+ * human-readable confirmation sentence.
+ */
+function formatDollars(amount: number, currency = "usd"): string {
+  const symbol = currency.toLowerCase() === "usd" ? "$" : "";
+  const formatted = amount.toFixed(2);
+  return symbol ? `${symbol}${formatted}` : `${formatted} ${currency.toUpperCase()}`;
+}
+
+/**
+ * Plain-language descriptions for the Stripe WRITE tools (Tier 3, FR-5.3,
+ * R-2/R-2a). MUST show exact dollar amounts (not raw cents) and currency,
+ * the charge/subscription identifier, and state plainly that the action
+ * moves real money / cannot be undone (R-2, FR-5.5).
+ */
+function describeStripeToolCall(tool: string, args: Record<string, unknown>): string {
+  switch (tool) {
+    case "refund_charge": {
+      const chargeId = typeof args.chargeId === "string" && args.chargeId ? args.chargeId : "(unknown charge)";
+      const amount = typeof args.amount === "number" ? args.amount : undefined;
+
+      let description: string;
+      if (amount !== undefined) {
+        description = `Refund ${formatDollars(amount)} of charge "${chargeId}" (a PARTIAL refund)`;
+      } else {
+        description = `Refund the FULL amount of charge "${chargeId}"`;
+      }
+      description +=
+        ". This moves real money out of your Stripe balance back to the customer and CANNOT be undone.";
+      return description;
+    }
+    case "cancel_subscription": {
+      const subscriptionId =
+        typeof args.subscriptionId === "string" && args.subscriptionId ? args.subscriptionId : "(unknown subscription)";
+      return (
+        `Cancel Stripe subscription "${subscriptionId}" immediately. This stops recurring billing for ` +
+        `this customer and CANNOT be undone.`
+      );
+    }
+    default:
+      return `Run stripe.${tool} with arguments: ${JSON.stringify(args)}`;
+  }
+}
+
+/**
+ * Plain-language descriptions for the Local Filesystem tools (Tier 1/2,
+ * FR-6.3/6.5). For destructive ops, makes clear that deletes go to
+ * `.jarvis-trash/` (recoverable) rather than vanishing.
+ */
+function describeFilesystemToolCall(tool: string, args: Record<string, unknown>): string {
+  const path = typeof args.path === "string" && args.path ? args.path : "(unknown path)";
+  const destination =
+    typeof args.destination === "string" && args.destination ? args.destination : "(unknown destination)";
+
+  switch (tool) {
+    case "write_file":
+      return `Overwrite the existing file "${path}" with new content. The previous contents will be replaced.`;
+    case "create_directory":
+      return `Create directory "${path}".`;
+    case "move":
+      return `Move/rename "${path}" to "${destination}", overwriting whatever currently exists at the destination.`;
+    case "delete_file":
+      return `Delete file "${path}". It will be moved to .jarvis-trash/ inside the allowed folder, not permanently erased.`;
+    case "delete_directory":
+      return `Delete directory "${path}" (and everything inside it). It will be moved to .jarvis-trash/ inside the allowed folder, not permanently erased.`;
+    default:
+      return `Run filesystem.${tool} with arguments: ${JSON.stringify(args)}`;
   }
 }
 

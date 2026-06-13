@@ -139,14 +139,14 @@ function fakeProvider(
   };
 }
 
-function mockToolCallThenReply(toolName: string, replyText: string): void {
+function mockToolCallThenReply(toolName: string, replyText: string, input: Record<string, unknown> = {}): void {
   createMock.mockResolvedValueOnce({
     content: [
       {
         type: "tool_use",
         id: "toolu_tier3",
         name: toolName,
-        input: {},
+        input,
       },
     ],
     usage: usage(),
@@ -394,5 +394,89 @@ describe("Tier 3 two-factor confirmation end-to-end (R-2a, SEC-6)", () => {
     await handleUserMessage(sessionId, "Move the money", provider);
 
     expect(tier3ToolHandler).not.toHaveBeenCalled();
+  });
+});
+
+describe("stripe.refund_charge end-to-end requires confirm AND valid TOTP (FR-5.3, R-2a)", () => {
+  beforeEach(() => {
+    resetDb();
+    getDb(":memory:");
+    createMock.mockReset();
+    setPauseModeOverride(undefined);
+    cleanupVaultFiles();
+  });
+
+  afterEach(() => {
+    resetDb();
+    skillRegistry.unregister("stripe");
+    setPauseModeOverride(undefined);
+    cleanupVaultFiles();
+  });
+
+  async function registerStripeStub(): Promise<void> {
+    vi.doMock("../config", async () => {
+      const path = await import("node:path");
+      const actual = await vi.importActual<typeof import("../config")>("../config");
+      return {
+        ...actual,
+        config: {
+          ...actual.config,
+          anthropicApiKey: "test-key",
+          hasAnthropicApiKey: true,
+          vaultBackend: "file",
+          vaultDevPassphrase: "test-passphrase-for-totp-spec",
+          vaultDir: path.resolve(__dirname, "..", "data", ".totp-test-vault"),
+          stripeApiKey: "",
+          hasStripeApiKey: false,
+          stripeAllowLiveMode: false,
+        },
+      };
+    });
+
+    const { registerStripeSkill } = await import("../skills/stripe");
+    await registerStripeSkill();
+  }
+
+  it("refund_charge does NOT execute without a valid TOTP code, even when confirmed", async () => {
+    await registerStripeStub();
+    const { handleUserMessage, createSessionId } = await import("../core/agent");
+
+    mockToolCallThenReply("stripe__refund_charge", "I can't refund that yet.", { chargeId: "ch_123" });
+
+    const provider = fakeProvider("approved", undefined);
+    const sessionId = createSessionId();
+    await handleUserMessage(sessionId, "Refund charge ch_123", provider);
+
+    expect(provider.requests).toHaveLength(1);
+    expect(provider.requests[0].tier).toBe(PermissionTier.FinancialOrIrreversible);
+    expect(provider.requests[0].requiresTotp).toBe(true);
+    expect(provider.requests[0].description).toMatch(/cannot be undone/i);
+
+    const activity = listRecentActivity(10);
+    const entry = activity.find((e) => e.tool === "refund_charge");
+    expect(entry?.outcome).toBe("denied");
+  });
+
+  it("refund_charge executes ONLY with BOTH an approved confirmation AND a valid TOTP code", async () => {
+    await registerStripeStub();
+    const { generateTotpSecret, generateTotpCode } = await import("../security/totp");
+    const setup = await generateTotpSecret();
+    const validCode = await generateTotpCode(setup.secret);
+
+    const { handleUserMessage, createSessionId } = await import("../core/agent");
+
+    mockToolCallThenReply("stripe__refund_charge", "Refund issued.", { chargeId: "ch_789" });
+
+    const provider = fakeProvider("approved", validCode);
+    const sessionId = createSessionId();
+    const response = await handleUserMessage(sessionId, "Refund the full amount of charge ch_789", provider);
+
+    expect(response.reply).toBe("Refund issued.");
+
+    const activity = listRecentActivity(10);
+    const ranEntry = activity.find((e) => e.tool === "refund_charge" && e.summary?.startsWith("Ran"));
+    expect(ranEntry).toBeDefined();
+    expect(ranEntry?.outcome).toBe("success");
+    expect(ranEntry?.tier).toBe(PermissionTier.FinancialOrIrreversible);
   });
 });

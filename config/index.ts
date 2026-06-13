@@ -8,6 +8,7 @@
 // ---------------------------------------------------------------------------
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import dotenv from "dotenv";
 
@@ -126,6 +127,14 @@ export interface JarvisConfig {
    * separate config flag - never inferred or auto-enabled.
    */
   stripeAllowLiveMode: boolean;
+  /**
+   * FR-6.4: the single directory JARVIS's Local Filesystem skill is allowed
+   * to read/write within (skills/filesystem). Defaults to
+   * `~/Claude 2nd brain/JARVIS/`, derived via `os.homedir()` - never
+   * hardcoded to a specific user's home directory. Overridable via
+   * `JARVIS_ALLOWED_DIR` for testing or to point at a different folder.
+   */
+  allowedDirectory: string;
 }
 
 function readVaultBackend(raw: string | undefined): VaultBackend {
@@ -146,6 +155,15 @@ function readNumber(raw: string | undefined, fallback: number): number {
 
 /** Default OAuth redirect URI for Google's "Desktop app" client type. */
 export const DEFAULT_GOOGLE_OAUTH_REDIRECT_URI = "http://localhost:53682/oauth2callback";
+
+/**
+ * Default allowed root directory for the Local Filesystem skill (FR-6.4):
+ * `~/Claude 2nd brain/JARVIS/`, derived via `os.homedir()` so it never points
+ * at a specific user's home directory by accident.
+ */
+export function defaultAllowedDirectory(): string {
+  return path.join(os.homedir(), "Claude 2nd brain", "JARVIS");
+}
 
 function buildConfig(env: NodeJS.ProcessEnv): JarvisConfig {
   const anthropicApiKey = env.ANTHROPIC_API_KEY?.trim() ?? "";
@@ -177,6 +195,9 @@ function buildConfig(env: NodeJS.ProcessEnv): JarvisConfig {
     stripeApiKey,
     hasStripeApiKey: stripeApiKey.length > 0,
     stripeAllowLiveMode: (env.STRIPE_ALLOW_LIVE_MODE?.trim().toLowerCase() ?? "") === "true",
+    allowedDirectory: env.JARVIS_ALLOWED_DIR?.trim()
+      ? path.resolve(env.JARVIS_ALLOWED_DIR.trim())
+      : defaultAllowedDirectory(),
   };
 }
 
