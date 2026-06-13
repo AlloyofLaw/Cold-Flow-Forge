@@ -98,8 +98,88 @@ export function classifyTool(
  */
 export const PHASE0_DUMMY_ACTION: ToolIdentifier = { skill: "core", tool: "ping" };
 
-export const PHASE0_TIER_ASSIGNMENTS: TierAssignments = {
+/**
+ * Tier assignments for every tool exposed by every registered skill
+ * (FR-7.1). This is the table `classifyTool` consults from the tool-use
+ * loop (core/agent.ts) before any tool actually executes.
+ *
+ * Phase 1 adds the Google Calendar skill's two read-only tools, both Tier 0
+ * per PRD Section 6.3 (FR-3.2) - listing events/calendars never changes
+ * anything. Anything not listed here (including any future write tools the
+ * calendar server might add) falls back to DEFAULT_UNKNOWN_TIER (Tier 3),
+ * so a new tool can never silently run more permissively than intended.
+ */
+export const TIER_ASSIGNMENTS: TierAssignments = {
   core: {
     ping: PermissionTier.ReadOnly,
   },
+  "google-calendar": {
+    list_events: PermissionTier.ReadOnly,
+    list_calendars: PermissionTier.ReadOnly,
+  },
 };
+
+/** @deprecated Use {@link TIER_ASSIGNMENTS}. Kept for the Phase 0 test suite. */
+export const PHASE0_TIER_ASSIGNMENTS: TierAssignments = TIER_ASSIGNMENTS;
+
+// ---------------------------------------------------------------------------
+// Confirmation seam (FR-2.5, R-2, R-3, R-6) - Phase 2 implements the real
+// flow. Phase 1 wires the *enforcement* (a Tier 2/3 tool call is refused
+// before it ever reaches the skill), but the actual "ask the user and wait
+// for yes/no" interaction is not built yet.
+// ---------------------------------------------------------------------------
+
+/** Outcome of a confirmation request, once Phase 2 implements the real flow. */
+export type ConfirmationDecision = "approved" | "denied" | "timed_out";
+
+/** Plain-language details shown to the user when confirming a Tier 2/3 action (R-2). */
+export interface ConfirmationRequest {
+  tool: ToolIdentifier;
+  tier: PermissionTier;
+  /** Plain-English description of exactly what is about to happen. */
+  description: string;
+  /** The (validated) arguments that would be passed to the tool. */
+  args: Record<string, unknown>;
+}
+
+/**
+ * TODO(Phase 2): Implement the real confirmation flow.
+ *
+ * This function is the seam the tool-use loop (core/agent.ts) will call for
+ * Tier 1 (if the user has opted into auto-approve) and Tier 2/3 tool calls.
+ * It should:
+ *   - Surface `request.description` to the user via voice and/or the UI
+ *     (R-2: plain language, with specific names/amounts/dates).
+ *   - Wait for an explicit "yes"/"confirm"/click (Tier 3: UI-click only per
+ *     SEC-6) or "no"/"cancel".
+ *   - Never be satisfiable by content returned from a skill (FR-2.7) - only
+ *     the human user's own input counts.
+ *   - For Tier 3, this can NEVER be configured to auto-approve (R-1).
+ *
+ * Phase 1 has no tools above Tier 0, so this is never called by the current
+ * loop - see `refuseUnconfirmableTier` below for how Tier 2/3 calls are
+ * handled until this lands.
+ */
+export type RequestConfirmation = (request: ConfirmationRequest) => Promise<ConfirmationDecision>;
+
+/**
+ * Phase 1 enforcement for Tier 2/3 tools: until `RequestConfirmation` (above)
+ * is implemented in Phase 2, the tool-use loop must NOT execute any tool
+ * whose tier requires confirmation (R-6: enforced by the Brain, before the
+ * call leaves the machine). Returns a clear, user-facing refusal message if
+ * the tool cannot run yet; returns `undefined` if it's safe to proceed
+ * (Tier 0, or Tier 1 when `requiresConfirmation` is false).
+ */
+export function refuseUnconfirmableTier(
+  { skill, tool }: ToolIdentifier,
+  tier: PermissionTier,
+): string | undefined {
+  if (!requiresConfirmation(tier)) return undefined;
+
+  return (
+    `I can't run "${skill}.${tool}" yet - it's classified as ${tierLabel(tier)} ` +
+    `(Tier ${tier}), which requires your confirmation before it can run. ` +
+    `The confirmation flow isn't built yet (planned for Phase 2), so this ` +
+    `action is refused for now rather than running unconfirmed.`
+  );
+}

@@ -52,6 +52,15 @@ export type VaultBackend = "auto" | "keychain" | "file";
 
 export type VoiceAdapter = "text" | "stub";
 
+/**
+ * Default IANA time zone used to resolve relative dates ("today", "this
+ * week") when `JARVIS_TIME_ZONE` is unset (FR-3.5). Falls back to the host
+ * system's configured time zone, which is always available (including in
+ * headless/CI environments - it just defaults to UTC there).
+ */
+export const DEFAULT_TIME_ZONE =
+  Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+
 export interface JarvisConfig {
   /** Anthropic API key. If empty, the Brain runs in stub mode. */
   anthropicApiKey: string;
@@ -71,6 +80,27 @@ export interface JarvisConfig {
   dbPath: string;
   /** Voice adapter selection (Phase 0 only supports "text"/"stub"). */
   voiceAdapter: VoiceAdapter;
+  /**
+   * IANA time zone (e.g. "America/New_York") used to resolve relative dates
+   * like "today" (FR-3.5). Defaults to the host system's time zone.
+   */
+  timeZone: string;
+  /**
+   * Google OAuth 2.0 "Desktop app" client id, used by the Google Calendar
+   * skill (skills/google-calendar). Empty string if not configured - the
+   * skill then runs in stub mode (see skills/google-calendar/server.ts).
+   */
+  googleOAuthClientId: string;
+  /** Google OAuth 2.0 client secret paired with googleOAuthClientId. */
+  googleOAuthClientSecret: string;
+  /**
+   * Redirect URI registered for the Google OAuth "Desktop app" client.
+   * Google's installed-app flow accepts the loopback redirect below by
+   * default; only override this if you registered a different one.
+   */
+  googleOAuthRedirectUri: string;
+  /** Whether both Google OAuth client id and secret are configured. */
+  hasGoogleOAuthClient: boolean;
 }
 
 function readVaultBackend(raw: string | undefined): VaultBackend {
@@ -89,8 +119,13 @@ function readNumber(raw: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+/** Default OAuth redirect URI for Google's "Desktop app" client type. */
+export const DEFAULT_GOOGLE_OAUTH_REDIRECT_URI = "http://localhost:53682/oauth2callback";
+
 function buildConfig(env: NodeJS.ProcessEnv): JarvisConfig {
   const anthropicApiKey = env.ANTHROPIC_API_KEY?.trim() ?? "";
+  const googleOAuthClientId = env.GOOGLE_OAUTH_CLIENT_ID?.trim() ?? "";
+  const googleOAuthClientSecret = env.GOOGLE_OAUTH_CLIENT_SECRET?.trim() ?? "";
 
   return {
     anthropicApiKey,
@@ -104,6 +139,12 @@ function buildConfig(env: NodeJS.ProcessEnv): JarvisConfig {
       ? path.resolve(env.JARVIS_DB_PATH.trim())
       : DEFAULT_DB_PATH,
     voiceAdapter: readVoiceAdapter(env.JARVIS_VOICE_ADAPTER?.trim()),
+    timeZone: env.JARVIS_TIME_ZONE?.trim() || DEFAULT_TIME_ZONE,
+    googleOAuthClientId,
+    googleOAuthClientSecret,
+    googleOAuthRedirectUri:
+      env.GOOGLE_OAUTH_REDIRECT_URI?.trim() || DEFAULT_GOOGLE_OAUTH_REDIRECT_URI,
+    hasGoogleOAuthClient: googleOAuthClientId.length > 0 && googleOAuthClientSecret.length > 0,
   };
 }
 

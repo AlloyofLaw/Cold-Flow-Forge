@@ -1,13 +1,15 @@
-# JARVIS (Phase 0: Foundation Scaffold)
+# JARVIS (Phase 1: First Skill - Google Calendar)
 
 JARVIS is a voice-first personal AI agent that runs on your own computer. This
-repository is the **Phase 0** build: a runnable desktop app with a chat
-window, an activity log, and all the local plumbing (database, credential
-vault, permission framework) that later phases build on. **No accounts or API
-keys are required to run it.**
+repository is the **Phase 1** build: a runnable desktop app with a chat
+window, an activity log, all the local plumbing from Phase 0 (database,
+credential vault, permission framework), and JARVIS's first connected skill -
+a **read-only Google Calendar** integration so you can ask things like "what's
+on my calendar today?". **No accounts or API keys are required to run it** -
+everything works in a clearly-labeled "stub mode" out of the box.
 
-See `PRD-JARVIS.md` for the full product plan. This README only covers
-getting Phase 0 running.
+See `PRD-JARVIS.md` for the full product plan. This README covers getting
+JARVIS running, with or without a Google account connected.
 
 ---
 
@@ -70,7 +72,104 @@ secrets in `.env`, never in any file you might commit.
 
 ---
 
-## 4. The credential vault
+## 4. Connect your Google Calendar (optional)
+
+JARVIS can read your Google Calendar so it can answer questions like "what's
+on my calendar today?" or "when's my next meeting?". This is **read-only** -
+JARVIS can only ever *view* your calendars and events. It can never create,
+edit, delete, or respond to anything on your calendar (in this phase or any
+future one, without a separate code change and a new permission).
+
+If you skip this section, JARVIS still works - the calendar tools simply
+return a clearly-labeled "no calendar connected yet" placeholder.
+
+### Step 1: Create a Google Cloud OAuth client
+
+1. Go to https://console.cloud.google.com/ and sign in with the Google
+   account whose calendar you want JARVIS to read.
+2. If you don't already have a project, create one (any name is fine, e.g.
+   "JARVIS").
+3. In the left sidebar, go to **APIs & Services -> Library**, search for
+   **"Google Calendar API"**, and click **Enable**.
+4. Go to **APIs & Services -> OAuth consent screen**:
+   - Choose **External** (unless you have a Google Workspace org and prefer
+     **Internal**).
+   - Fill in the required fields (app name, your email). You don't need to
+     submit this for verification - it's fine to leave it in "Testing" mode
+     since only you will use it.
+   - Under **Scopes**, you don't need to add anything here - JARVIS requests
+     its scope directly when you authorize it (Step 3 below).
+   - Under **Test users** (if the app is in "Testing" mode), add the Google
+     account you signed in with in Step 1.
+5. Go to **APIs & Services -> Credentials -> Create Credentials -> OAuth
+   client ID**:
+   - Application type: **Desktop app**.
+   - Name: anything, e.g. "JARVIS Desktop".
+   - Click **Create**. Google will show you a **Client ID** and **Client
+     secret** - keep this page open, you'll need both in the next step.
+
+### Step 2: Add the client id/secret to JARVIS
+
+1. Copy `.env.example` to `.env` if you haven't already (see Section 3).
+2. Open `.env` and fill in the two values from Step 1:
+   ```
+   GOOGLE_OAUTH_CLIENT_ID=your-client-id-here
+   GOOGLE_OAUTH_CLIENT_SECRET=your-client-secret-here
+   ```
+3. Leave `GOOGLE_OAUTH_REDIRECT_URI` blank unless you specifically configured
+   a different redirect URI on the OAuth client - the default
+   (`http://localhost:53682/oauth2callback`) matches what Google's "Desktop
+   app" client type expects automatically.
+4. (Optional) Set `JARVIS_TIME_ZONE` to your IANA time zone (e.g.
+   `America/New_York`, `Europe/London`) if it's different from the time zone
+   your computer is set to. JARVIS uses this to figure out what "today" and
+   "this week" mean, and to show event times with the right time zone.
+5. Save `.env` and restart JARVIS (`npm start`).
+
+### Step 3: One-time authorization
+
+This is the one-time step where you grant JARVIS read-only access to your
+calendar. Because JARVIS runs as a desktop app (not a website), this is done
+via a couple of one-line commands you run once from a terminal:
+
+1. With `.env` filled in from Step 2, make sure the project is built:
+   ```bash
+   npm run build
+   ```
+2. Print the authorization URL:
+   ```bash
+   node -e "console.log(require('./dist/skills/google-calendar/auth').getAuthorizationUrl())"
+   ```
+   This prints a `https://accounts.google.com/...` URL.
+3. Open that URL in any browser (it doesn't have to be on the same machine -
+   you can copy/paste it to your phone or another computer). Sign in with the
+   Google account from Step 1 and click **Allow**. The consent screen will
+   say JARVIS is requesting **read-only access to your calendars** - this
+   matches the `calendar.readonly` scope and nothing more.
+4. After clicking Allow, Google redirects your browser to
+   `http://localhost:53682/oauth2callback?code=...&scope=...`. The page itself
+   will likely show a "can't be reached" error in your browser - that's
+   expected (nothing is listening on that port). What matters is the `code=`
+   value in the URL's address bar. Copy everything between `code=` and the
+   next `&`.
+5. Run the following from this folder, replacing `PASTE_CODE_HERE` with the
+   code you copied (you may need to URL-decode it - e.g. replace `%2F` with
+   `/`):
+   ```bash
+   node -e "require('./dist/skills/google-calendar/auth').exchangeAuthorizationCode('PASTE_CODE_HERE').then(() => console.log('Connected!'))"
+   ```
+6. Restart JARVIS (`npm start`). Ask it "what's on my calendar today?" - it
+   should now read your real calendar.
+
+Your tokens are stored in JARVIS's local credential vault (Section 5 below),
+never in `.env`, the repo, or anywhere else. To disconnect, remove the stored
+tokens from the vault (e.g. delete the relevant entry from your OS keychain,
+or `data/.jarvis-dev-vault.json` if you're using the file-based fallback) and
+JARVIS goes back to stub mode for the calendar skill.
+
+---
+
+## 5. The credential vault
 
 JARVIS stores integration secrets (API keys, OAuth tokens - used by later
 phases) in your operating system's secure keychain:
@@ -88,7 +187,7 @@ backend automatically and the rest of the app behaves identically either way.
 
 ---
 
-## 5. Useful commands
+## 6. Useful commands
 
 | Command | What it does |
 |---|---|
@@ -101,28 +200,34 @@ backend automatically and the rest of the app behaves identically either way.
 
 ---
 
-## 6. What's in this Phase 0 build
+## 7. What's in this Phase 1 build
 
-- **`app/`** - Electron main process + preload bridge (window, IPC).
+- **`app/`** - Electron main process + preload bridge (window, IPC). Now also
+  connects all skills (Section 8) at startup.
 - **`ui/`** - The desktop window's HTML/CSS/TypeScript (conversation view,
   activity log, status panel).
 - **`core/`** - The "Brain": talks to the Claude API (or returns a stub reply
-  if no key is set) and the permission-tier framework (Tier 0-3).
-- **`skills/`** - MCP client plumbing and the skill registry. Empty in Phase
-  0 - no real integrations (Calendar/Email/Stripe/Filesystem) yet.
-- **`voice/`** - Pluggable voice adapter interface. Phase 0 ships only the
-  text-only fallback (FR-1.6) - full voice arrives in a later phase.
+  if no key is set), runs the generic MCP tool-use loop (FR-2.3) so the model
+  can call any connected skill's tools, and the permission-tier framework
+  (Tier 0-3) that enforces R-6 (every tool call is classified and, for Tier
+  2/3, refused before it ever runs).
+- **`skills/`** - MCP client plumbing and the skill registry. Phase 1 connects
+  the first real integration: `skills/google-calendar/` (read-only).
+- **`voice/`** - Pluggable voice adapter interface. Phase 1 still ships only
+  the text-only fallback (FR-1.6) - full voice arrives in a later phase.
 - **`store/`** - SQLite access for conversations, the activity log, long-term
   memory, the cost ledger, and settings.
-- **`security/`** - The credential vault wrapper described above.
+- **`security/`** - The credential vault wrapper described above, now also
+  storing Google OAuth tokens (Section 4).
 - **`config/`** - Reads `.env` and exposes typed configuration to the rest of
-  the app.
-- **`test/`** - Automated tests covering config, permission tiers, the store,
-  the vault, and the agent's stub-mode flow.
+  the app, including the time zone and Google OAuth settings.
+- **`test/`** - Automated tests covering config, permission tiers (including
+  Tier 2/3 refusal), the store, the vault, the tool-use loop, the agent's
+  stub-mode flow, and the Google Calendar skill's stub mode.
 
 ---
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 - **Nothing happens / window doesn't open**: make sure you're running on a
   machine with a desktop environment (Electron needs a display). Headless
@@ -131,5 +236,17 @@ backend automatically and the rest of the app behaves identically either way.
 - **"Stub mode" never goes away after adding a key**: double-check the file is
   named exactly `.env` (not `.env.example` or `.env.txt`) and is in the same
   folder as `package.json`, then restart with `npm start`.
+- **Calendar tools always say "no calendar connected yet"**: make sure
+  `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` are set in `.env`
+  (Section 4, Step 2) and that you've completed Step 3 (one-time
+  authorization). If you've done both and it's still in stub mode, your stored
+  token may have been revoked - re-run Step 3 to re-authorize.
+- **"invalid_grant" or "redirect_uri_mismatch" during authorization**: the
+  authorization code from Step 3 can only be used once and expires quickly -
+  request a fresh URL (Step 3.2) and complete the exchange (Step 3.5) right
+  away. A `redirect_uri_mismatch` means the OAuth client in Google Cloud
+  Console isn't a "Desktop app" type, or `GOOGLE_OAUTH_REDIRECT_URI` in `.env`
+  doesn't match what's registered - Desktop app clients accept the default
+  loopback redirect automatically, so leaving it blank is usually correct.
 - **Want a clean slate?** Delete the `data/` folder (and `.env` if you want to
   remove your key) and run `npm start` again - everything is recreated.

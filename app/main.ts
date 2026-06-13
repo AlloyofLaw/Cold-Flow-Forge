@@ -15,6 +15,7 @@ import { getSessionMessages } from "../store/conversations";
 import { getCurrentMonthCost, getTodayCost } from "../store/costLedger";
 import { config } from "../config";
 import { getVoiceAdapter } from "../voice";
+import { registerAllSkills } from "../skills";
 import { IPC_CHANNELS } from "./ipcChannels";
 
 let mainWindow: BrowserWindow | undefined;
@@ -68,9 +69,14 @@ function registerIpcHandlers(): void {
   });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Initialize the SQLite store (creates schema on first run).
   getDb();
+
+  // Connect built-in skills (Phase 1: Google Calendar, read-only). Each
+  // skill handles its own stub mode, so this is safe with no accounts
+  // connected (FR-7.1).
+  await registerAllSkills();
 
   activeSessionId = createSessionId();
 

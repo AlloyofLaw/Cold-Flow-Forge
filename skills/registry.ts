@@ -2,12 +2,20 @@
 // Skill registry (PRD Section 6.7 / FR-7.1-7.5).
 //
 // A "skill" is an MCP server that exposes one or more tools to the Brain.
-// Phase 0 ships an EMPTY registry - no real skills are connected yet - but
-// the data shapes here are what the Integrations panel (FR-7.2) and the
-// permission framework (core/permissions.ts) will consume in later phases.
+// Phase 0 shipped an EMPTY registry - no real skills were connected yet.
+// Phase 1 connects the first real skill (Google Calendar, read-only) and
+// uses this registry to drive the generic tool-use loop (core/agent.ts):
+// for every registered + connected skill, its `client` is asked for the
+// tools it exposes, those are surfaced to the Brain, and tool calls are
+// dispatched back through the same `client`.
+//
+// The registry stays general on purpose (FR-7.4): adding skill #2 (Gmail,
+// Phase 2+) is "register another SkillDescriptor with a connected client",
+// nothing in core/agent.ts needs to change.
 // ---------------------------------------------------------------------------
 
 import type { PermissionTier } from "../core/permissions";
+import type { McpSkillClient } from "./mcpClient";
 
 export type SkillConnectionStatus = "connected" | "disconnected" | "error";
 
@@ -28,12 +36,19 @@ export interface SkillDescriptor {
   mcpServerRef: string;
   status: SkillConnectionStatus;
   tools: SkillToolDescriptor[];
+  /**
+   * The connected MCP client for this skill, if `status === "connected"`.
+   * The tool-use loop (core/agent.ts) uses this to list/call tools. Skills
+   * that are merely catalogued but not connected (future
+   * FR-7.2 Integrations panel entries) may omit this.
+   */
+  client?: McpSkillClient;
 }
 
 /**
- * The skill registry. Phase 0 intentionally has no entries: no real MCP
- * servers are connected yet (PRD Phase 0 scope). Later phases will populate
- * this from config + the credential vault as skills are connected.
+ * The skill registry. Phase 0 shipped with no entries (no real MCP servers
+ * connected yet). From Phase 1 onward, skills register themselves here
+ * (e.g. skills/google-calendar/index.ts) during app/agent startup.
  */
 export class SkillRegistry {
   private readonly skills = new Map<string, SkillDescriptor>();
@@ -57,7 +72,18 @@ export class SkillRegistry {
   list(): SkillDescriptor[] {
     return Array.from(this.skills.values());
   }
+
+  /** List only skills that are connected and have an MCP client attached. */
+  listConnected(): Array<SkillDescriptor & { client: McpSkillClient }> {
+    const connected: Array<SkillDescriptor & { client: McpSkillClient }> = [];
+    for (const skill of this.list()) {
+      if (skill.status === "connected" && skill.client !== undefined) {
+        connected.push({ ...skill, client: skill.client });
+      }
+    }
+    return connected;
+  }
 }
 
-/** Process-wide singleton registry (empty in Phase 0). */
+/** Process-wide singleton registry (empty until skills register themselves). */
 export const skillRegistry = new SkillRegistry();
