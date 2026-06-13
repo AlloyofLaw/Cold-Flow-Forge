@@ -429,8 +429,8 @@ These are decisions you (Andrew) should make before or during build — flagged 
 
 1. **Wake word vs. push-to-talk** for v1? *(Recommended default: push-to-talk first — simplest and most private — add wake word in a later pass.)*
 2. **Which LLM powers the Brain?** *(Recommended default: a Claude model via the Anthropic API; revisit a local model later if privacy needs grow.)*
-3. **Which calendar/email provider** first — Google Workspace, Microsoft 365, or both? *(Pick the one you actually use day-to-day.)*
-4. **Allowed directories for filesystem access** — which folders can JARVIS touch from day one? *(Recommended default: a single dedicated `~/JARVIS` folder, expand later.)*
+3. **Which calendar/email provider** first — Google Workspace, Microsoft 365, or both? *(Decided: Google.)*
+4. **Allowed directories for filesystem access** — which folders can JARVIS touch from day one? *(Decided: `~/Claude 2nd brain/JARVIS/` — a subfolder of the user's existing "Claude 2nd brain" folder. This becomes the default `allowedDirectories` setting in Phase 4; expand later as trust builds.)*
 5. **Confirmation method for Tier 3** — voice phrase, UI click only, or PIN? *(Recommended default: UI click only, to avoid voice-spoofing risk — see SEC-6.)*
 6. **Desktop OS priority** — Mac-first vs. cross-platform from day one? *(Recommended default: Electron gives you cross-platform anyway; develop/test on your primary machine first.)*
 7. **Voice processing location** — cloud (easy) vs. local (private) for the first build? *(Recommended default: cloud to get it working, switch to local once comfortable — the layer is pluggable, FR-1.4.)*
