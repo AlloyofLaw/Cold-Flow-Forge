@@ -21,6 +21,10 @@ ui/dist/
 data/
 .jarvis-dev-vault*
 
+# Local Filesystem skill trash (FR-6.5) - in case the allowed folder ever
+# points inside the repo during local testing.
+.jarvis-trash/
+
 # Logs
 *.log
 npm-debug.log*

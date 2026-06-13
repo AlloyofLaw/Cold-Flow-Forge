@@ -161,7 +161,7 @@ via a couple of one-line commands you run once from a terminal:
 6. Restart JARVIS (`npm start`). Ask it "what's on my calendar today?" - it
    should now read your real calendar.
 
-Your tokens are stored in JARVIS's local credential vault (Section 7 below),
+Your tokens are stored in JARVIS's local credential vault (Section 8 below),
 never in `.env`, the repo, or anywhere else. To disconnect, remove the stored
 tokens from the vault (e.g. delete the relevant entry from your OS keychain,
 or `data/.jarvis-dev-vault.json` if you're using the file-based fallback) and
@@ -182,21 +182,46 @@ above; no separate setup is required.
 
 ---
 
-## 5. Connect Stripe (optional, read-only, TEST MODE)
+## 5. Connect Stripe (optional, TEST MODE)
 
 JARVIS can look up your Stripe balance, recent charges, payouts, customers,
 disputes, and invoices so it can answer questions like "what's my Stripe
-balance?" or "any new disputes this week?". This is **read-only** - there is
-no tool to issue refunds, create charges, or change anything in Stripe.
+balance?" or "any new disputes this week?". This part is **read-only**.
 
 If you skip this section, JARVIS still works - the Stripe tools simply return
 a clearly-labeled "no Stripe account is connected" placeholder with example
 numbers.
 
+### Stripe refunds & subscription cancellations (Tier 3)
+
+JARVIS can also **refund a charge** (in full, or a partial amount you
+specify) and **cancel a subscription**. These move real money and stop
+recurring billing, so they are the most strictly-guarded actions JARVIS can
+take:
+
+- **Tier 3 - two-factor confirmation, always.** Before either action runs,
+  JARVIS shows you a plain-language confirmation describing EXACTLY what's
+  about to happen - the exact dollar amount and currency (e.g. "$25.50 USD"),
+  whether it's a full or partial refund, the charge or subscription id, and a
+  clear statement that this moves real money / stops billing and **cannot be
+  undone**. You must click **Confirm** AND enter the 6-digit code from your
+  authenticator app (e.g. Google Authenticator) - voice confirmation alone is
+  never enough, and the code is never spoken aloud. If you haven't set up
+  two-factor yet, JARVIS will tell you and refuse the action until you do.
+- **Test-mode by default.** Like the read-only Stripe tools, refunds and
+  cancellations only run against a `sk_test_`/`rk_test_` key unless you set
+  `STRIPE_ALLOW_LIVE_MODE=true`. With no key configured (or in test mode
+  without a real account), JARVIS shows a clearly-labeled stub result and
+  makes no real Stripe call.
+- **Still out of scope (FR-5.4):** JARVIS has NO tool to create new charges,
+  change your payout/bank details, modify Stripe account settings, or manage
+  API keys - by design, not just by omission.
+
 **Safety rail: JARVIS defaults to Stripe TEST MODE.** It will refuse to use a
 live-mode key (`sk_live_...`/`rk_live_...`) unless you explicitly set
 `STRIPE_ALLOW_LIVE_MODE=true` in `.env` - so there's no risk of JARVIS
-accidentally querying your real, live Stripe account while you're testing.
+accidentally querying or refunding against your real, live Stripe account
+while you're testing.
 
 ### Step 1: Create a restricted, read-only, TEST-MODE API key
 
@@ -204,15 +229,23 @@ accidentally querying your real, live Stripe account while you're testing.
 2. Make sure you're in **Test mode** (toggle in the top-right of the
    dashboard) - this is the default for a new Stripe account.
 3. Go to **Developers -> API keys -> Create restricted key**.
-4. Give it a name (e.g. "JARVIS read-only").
+4. Give it a name (e.g. "JARVIS").
 5. Set the following to **Read** access, and leave everything else as **None**:
    - Balance
-   - Charges
    - Payouts
    - Customers
    - Disputes
    - Invoices
-6. Click **Create key** and copy the key - it will start with `rk_test_`.
+6. If you want JARVIS to be able to issue **refunds** and **cancel
+   subscriptions** (Tier 3, with two-factor confirmation), also set:
+   - Charges: **Write**
+   - Subscriptions: **Write**
+
+   If you'd rather keep JARVIS read-only for now, leave these as **Read**
+   (or **None**) - the refund/cancel tools will simply fail with a
+   permission error from Stripe if called, and you can grant write access
+   later by editing the key's permissions.
+7. Click **Create key** and copy the key - it will start with `rk_test_`.
 
 ### Step 2: Add the key to JARVIS
 
@@ -226,10 +259,69 @@ accidentally querying your real, live Stripe account while you're testing.
    JARVIS to use a live-mode key (not recommended).
 4. Save `.env` and restart JARVIS (`npm start`). Ask it "what's my Stripe
    balance?" - it should now return real test-mode data from your account.
+5. To use refunds/cancellations, also set up two-factor confirmation (see
+   "Set up two-factor confirmation" below) - Tier 3 actions are refused until
+   that one-time setup is done.
+
+### Set up two-factor confirmation (required for refunds/cancellations)
+
+Tier 3 actions (Stripe refunds, subscription cancellations) require a
+6-digit code from an authenticator app (e.g. Google Authenticator, Authy, or
+your password manager's TOTP support) in addition to clicking Confirm. This
+is a one-time setup:
+
+1. In the JARVIS UI, open **Settings -> Two-factor confirmation** and choose
+   "Set up authenticator".
+2. Scan the displayed QR code with your authenticator app, or type in the
+   shown secret manually.
+3. Enter the 6-digit code your app shows to confirm it's working.
+
+After setup, any Tier 3 action will prompt for both a Confirm/Cancel decision
+and this 6-digit code. The code is entered in the UI only - JARVIS never asks
+you to say it out loud, since a recording could capture a spoken code.
+Running setup again generates a new secret and invalidates the old one.
 
 ---
 
-## 6. Cost meter & budget cap
+## 6. JARVIS and your files
+
+JARVIS can read, write, organize, and "delete" files within **one folder on
+your computer** - by default `~/Claude 2nd brain/JARVIS/` (under your home
+directory). It can never see or touch anything outside that folder.
+
+- **Auto-created.** If the folder doesn't exist yet, JARVIS creates it
+  automatically the first time it starts - you don't need to create it
+  yourself.
+- **What JARVIS can do in this folder:**
+  - List what's there, read text files, and check file/folder info (no
+    confirmation needed - read-only).
+  - Create new files and folders, and write to files that don't exist yet
+    (no confirmation needed - easy to undo).
+  - **Overwrite** an existing file, or move/rename something onto an
+    existing path (confirmation required, since the old contents would be
+    replaced).
+  - "Delete" a file or folder (confirmation required) - see below.
+- **Deletes go to `.jarvis-trash/`, not oblivion.** When JARVIS "deletes" a
+  file or folder, it actually MOVES it into a `.jarvis-trash/` folder inside
+  your JARVIS folder, with the date/time added to its name (e.g.
+  `20260613T083000-old-notes.txt`). Nothing is permanently erased - if JARVIS
+  (or you) deletes something by mistake, you can find it in `.jarvis-trash/`
+  and move it back. JARVIS does not automatically empty this trash folder.
+- **Large files.** JARVIS won't read text files larger than about 1MB (it
+  will tell you clearly rather than flooding the conversation).
+
+### Changing the folder
+
+Set `JARVIS_ALLOWED_DIR` in `.env` to the full path of a different folder, and
+restart JARVIS. For example:
+
+```
+JARVIS_ALLOWED_DIR=/Users/yourname/Documents/JARVIS
+```
+
+---
+
+## 7. Cost meter & budget cap
 
 Every call JARVIS makes to the Claude API is recorded in a local cost ledger
 with an **estimated** cost in USD, based on the model's published per-million-
@@ -256,7 +348,7 @@ Set `JARVIS_MONTHLY_BUDGET_USD` in `.env` to your preferred monthly limit.
 
 ---
 
-## 7. The credential vault
+## 8. The credential vault
 
 JARVIS stores integration secrets (API keys, OAuth tokens - used by later
 phases) in your operating system's secure keychain:
@@ -274,7 +366,7 @@ backend automatically and the rest of the app behaves identically either way.
 
 ---
 
-## 8. Useful commands
+## 9. Useful commands
 
 | Command | What it does |
 |---|---|
@@ -287,7 +379,7 @@ backend automatically and the rest of the app behaves identically either way.
 
 ---
 
-## 9. What's in this Phase 1 build
+## 10. What's in this Phase 1 build
 
 - **`app/`** - Electron main process + preload bridge (window, IPC). Connects
   all skills and surfaces the live cost meter / budget status at startup.
@@ -319,7 +411,7 @@ backend automatically and the rest of the app behaves identically either way.
 
 ---
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 - **Nothing happens / window doesn't open**: make sure you're running on a
   machine with a desktop environment (Electron needs a display). Headless
