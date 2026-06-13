@@ -6,11 +6,14 @@
 //   - https://www.googleapis.com/auth/gmail.readonly  (search/read mail)
 //   - https://www.googleapis.com/auth/gmail.compose   (create drafts)
 //
-// `gmail.compose` technically permits sending mail too, but JARVIS does NOT
-// expose any send tool (Phase 3, per PRD Section 14) - this is least
-// privilege enforced at the TOOL layer (SEC-2), on top of the narrowest
-// scope combination that still allows draft creation. Never request
-// `gmail.modify` or full `mail.google.com` access.
+// `gmail.compose` covers creating, reading, and SENDING drafts/messages
+// (gmail.users.messages.send and gmail.users.drafts.send are both within
+// this scope), so Phase 3's `send_email` tool (Tier 2, FR-4.4) needs NO
+// scope upgrade - this remains the narrowest scope combination that
+// supports drafting AND sending. Least privilege is enforced at the TOOL
+// layer (SEC-2): every send is Tier 2 and ALWAYS requires confirmation
+// (core/permissions.ts). Never request `gmail.modify` or full
+// `mail.google.com` access.
 //
 // Credentials and tokens:
 //   - Reuses the SAME Google OAuth *client* id/secret as the Calendar skill

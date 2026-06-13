@@ -101,6 +101,23 @@ export interface JarvisConfig {
   googleOAuthRedirectUri: string;
   /** Whether both Google OAuth client id and secret are configured. */
   hasGoogleOAuthClient: boolean;
+  /**
+   * Stripe restricted API key (FR-5.1, SEC-2). Empty string if not
+   * configured - the Stripe skill then runs in stub mode (see
+   * skills/stripe/server.ts). Accepts either a secret key (`sk_...`) or a
+   * restricted key (`rk_...`), test or live mode.
+   */
+  stripeApiKey: string;
+  /** Whether a Stripe API key is configured. */
+  hasStripeApiKey: boolean;
+  /**
+   * FR-5.6 / SEC-2 safety rail: by default, JARVIS refuses to call Stripe
+   * with a key that does not look like a TEST-MODE key (`sk_test_`/
+   * `rk_test_`). Set `STRIPE_ALLOW_LIVE_MODE=true` to explicitly opt into
+   * live-mode calls with a `sk_live_`/`rk_live_` key. This is a deliberate,
+   * separate config flag - never inferred or auto-enabled.
+   */
+  stripeAllowLiveMode: boolean;
 }
 
 function readVaultBackend(raw: string | undefined): VaultBackend {
@@ -126,6 +143,7 @@ function buildConfig(env: NodeJS.ProcessEnv): JarvisConfig {
   const anthropicApiKey = env.ANTHROPIC_API_KEY?.trim() ?? "";
   const googleOAuthClientId = env.GOOGLE_OAUTH_CLIENT_ID?.trim() ?? "";
   const googleOAuthClientSecret = env.GOOGLE_OAUTH_CLIENT_SECRET?.trim() ?? "";
+  const stripeApiKey = (env.STRIPE_API_KEY ?? env.STRIPE_RESTRICTED_KEY)?.trim() ?? "";
 
   return {
     anthropicApiKey,
@@ -145,6 +163,9 @@ function buildConfig(env: NodeJS.ProcessEnv): JarvisConfig {
     googleOAuthRedirectUri:
       env.GOOGLE_OAUTH_REDIRECT_URI?.trim() || DEFAULT_GOOGLE_OAUTH_REDIRECT_URI,
     hasGoogleOAuthClient: googleOAuthClientId.length > 0 && googleOAuthClientSecret.length > 0,
+    stripeApiKey,
+    hasStripeApiKey: stripeApiKey.length > 0,
+    stripeAllowLiveMode: (env.STRIPE_ALLOW_LIVE_MODE?.trim().toLowerCase() ?? "") === "true",
   };
 }
 

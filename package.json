@@ -21,7 +21,8 @@
     "better-sqlite3": "^12.4.1",
     "dotenv": "^17.2.3",
     "googleapis": "^160.0.0",
-    "googleapis-common": "^8.0.2"
+    "googleapis-common": "^8.0.2",
+    "stripe": "^18.5.0"
   },
   "optionalDependencies": {
     "keytar": "^7.9.0"

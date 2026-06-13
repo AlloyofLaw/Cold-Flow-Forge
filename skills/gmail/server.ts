@@ -22,9 +22,15 @@
 //   - mark_read:     mark a message as read (removes UNREAD label).
 //   - label_message: add/remove labels on a message.
 //
-// EXPLICITLY NOT IMPLEMENTED (Phase 3+ / never, per PRD Section 14 and
-// FR-4.4/4.6):
-//   - No "send" tool of any kind - drafts are saved only.
+//   SEND (Tier 2, FR-4.4, Phase 3):
+//   - send_email: send a real email - either composed fresh (to/cc/bcc/
+//     subject/body) or from an existing draft (draftId). ALWAYS requires
+//     the user's confirmation (core/permissions.ts TIER_ASSIGNMENTS +
+//     describeGmailToolCall) - this is the FIRST capability in JARVIS that
+//     can send something irreversible to other people, so there is no
+//     argument-aware downgrade: every call is Tier 2, no exceptions.
+//
+// EXPLICITLY NOT IMPLEMENTED (per FR-4.6 and PRD Section 14):
 //   - No delete/trash/permanently-delete tool.
 //
 // Stub mode (no Google OAuth credentials configured, or not yet authorized):
@@ -118,10 +124,11 @@ function messageToDetail(message: gmail_v1.Schema$Message): GmailMessageDetail {
   };
 }
 
-/** Build a raw RFC 2822 message for a draft (FR-4.3). */
-function buildRawMessage(to: string[], cc: string[] | undefined, subject: string, body: string): string {
+/** Build a raw RFC 2822 message for a draft or send (FR-4.3, FR-4.4). */
+function buildRawMessage(to: string[], cc: string[] | undefined, subject: string, body: string, bcc?: string[]): string {
   const lines = [`To: ${to.join(", ")}`];
   if (cc && cc.length > 0) lines.push(`Cc: ${cc.join(", ")}`);
+  if (bcc && bcc.length > 0) lines.push(`Bcc: ${bcc.join(", ")}`);
   lines.push(`Subject: ${subject}`, "Content-Type: text/plain; charset=utf-8", "", body);
   const message = lines.join("\r\n");
   return Buffer.from(message).toString("base64url");
@@ -362,6 +369,84 @@ export function createGmailServer(): McpServer {
       } catch (error) {
         return {
           content: [{ type: "text", text: `Failed to create Gmail draft: ${(error as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  server.registerTool(
+    "send_email",
+    {
+      title: "Send a Gmail email",
+      description:
+        "SEND a real email (Tier 2, FR-4.4) - ALWAYS requires the user's explicit confirmation " +
+        "before this runs, with no exceptions. This action cannot be unsent. Either compose a new " +
+        "message (provide to/subject/body, with optional cc/bcc) or send an existing draft by " +
+        "providing `draftId` (from create_draft). Uses the `gmail.compose` OAuth scope, which covers " +
+        "both creating drafts and sending them via gmail.users.drafts.send.",
+      inputSchema: {
+        draftId: z
+          .string()
+          .optional()
+          .describe("If set, send this existing draft (from create_draft) instead of composing a new message."),
+        to: z.array(z.string()).optional().describe("Recipient email addresses (required unless draftId is set)."),
+        cc: z.array(z.string()).optional().describe("CC email addresses."),
+        bcc: z.array(z.string()).optional().describe("BCC email addresses."),
+        subject: z.string().optional().describe("Email subject (required unless draftId is set)."),
+        body: z.string().optional().describe("Email body, plain text (required unless draftId is set)."),
+      },
+    },
+    async ({ draftId, to, cc, bcc, subject, body }) => {
+      const auth = await getGmailAuth();
+      if (!auth) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                stub: true,
+                notice: STUB_NOTICE,
+                wouldSend: draftId ? { draftId } : { to: to ?? [], cc: cc ?? [], bcc: bcc ?? [], subject, body },
+              }),
+            },
+          ],
+        };
+      }
+
+      try {
+        const gmail = google.gmail({ version: "v1", auth });
+
+        if (draftId) {
+          const sent = await gmail.users.drafts.send({ userId: "me", requestBody: { id: draftId } });
+          return {
+            content: [
+              { type: "text", text: JSON.stringify({ stub: false, sent: true, messageId: sent.data.id, draftId }) },
+            ],
+          };
+        }
+
+        if (!to || to.length === 0 || !subject || body === undefined) {
+          return {
+            content: [{ type: "text", text: "send_email requires either draftId, or to/subject/body to compose a new message." }],
+            isError: true,
+          };
+        }
+
+        const raw = buildRawMessage(to, cc, subject, body, bcc);
+        const sent = await gmail.users.messages.send({ userId: "me", requestBody: { raw } });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({ stub: false, sent: true, messageId: sent.data.id, to, cc: cc ?? [], bcc: bcc ?? [], subject }),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Failed to send Gmail message: ${(error as Error).message}` }],
           isError: true,
         };
       }

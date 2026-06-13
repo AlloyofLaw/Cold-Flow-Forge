@@ -144,6 +144,18 @@ export const TIER_ASSIGNMENTS: TierAssignments = {
     create_draft: PermissionTier.ReversibleInternal,
     mark_read: PermissionTier.ReversibleInternal,
     label_message: PermissionTier.ReversibleInternal,
+    // send_email is ALWAYS Tier 2 (FR-4.4) - sending an email is external-
+    // facing and cannot be unsent, regardless of arguments. No classifier
+    // hook exists for it, and none should ever be added (R-6).
+    send_email: PermissionTier.ExternalOrHardToReverse,
+  },
+  stripe: {
+    get_balance: PermissionTier.ReadOnly,
+    list_charges: PermissionTier.ReadOnly,
+    list_payouts: PermissionTier.ReadOnly,
+    list_customers: PermissionTier.ReadOnly,
+    list_disputes: PermissionTier.ReadOnly,
+    list_invoices: PermissionTier.ReadOnly,
   },
 };
 
@@ -295,6 +307,7 @@ function describeCalendarToolCall(tool: string, args: Record<string, unknown>): 
 function describeGmailToolCall(tool: string, args: Record<string, unknown>): string {
   const to = formatList(args.to);
   const cc = formatList(args.cc);
+  const bcc = formatList(args.bcc);
   const subject = typeof args.subject === "string" && args.subject ? args.subject : "(no subject)";
   const body = typeof args.body === "string" ? args.body : "";
   const bodyPreview = body.length > 140 ? `${body.slice(0, 140)}...` : body;
@@ -306,6 +319,22 @@ function describeGmailToolCall(tool: string, args: Record<string, unknown>): str
       description += ` with subject "${subject}"`;
       if (bodyPreview) description += ` and body starting: "${bodyPreview}"`;
       description += ". This saves a draft only - it will NOT be sent.";
+      return description;
+    }
+    case "send_email": {
+      const draftId = typeof args.draftId === "string" && args.draftId ? args.draftId : undefined;
+
+      let description: string;
+      if (draftId) {
+        description = `Send the existing draft "${draftId}"`;
+      } else {
+        description = `SEND an email to ${to.length > 0 ? to.join(", ") : "(no recipient set)"}`;
+        if (cc.length > 0) description += ` (cc: ${cc.join(", ")})`;
+        if (bcc.length > 0) description += ` (bcc: ${bcc.join(", ")})`;
+        description += ` with subject "${subject}"`;
+        if (bodyPreview) description += ` and body starting: "${bodyPreview}"`;
+      }
+      description += ". This will SEND a real email - it cannot be unsent.";
       return description;
     }
     default:
