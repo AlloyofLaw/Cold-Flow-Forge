@@ -1,15 +1,29 @@
-# JARVIS (Phase 1: First Skill - Google Calendar)
+# JARVIS (Phases 0-4 build)
 
 JARVIS is a voice-first personal AI agent that runs on your own computer. This
-repository is the **Phase 1** build: a runnable desktop app with a chat
-window, an activity log, all the local plumbing from Phase 0 (database,
-credential vault, permission framework), and JARVIS's first connected skill -
-a **read-only Google Calendar** integration so you can ask things like "what's
-on my calendar today?". **No accounts or API keys are required to run it** -
-everything works in a clearly-labeled "stub mode" out of the box.
+repository is the **Phases 0-4** build: a runnable desktop app with a chat
+window, an activity log, and all the local plumbing (database, credential
+vault, permission framework, monthly budget cap). It has four connected
+skills:
+
+- **Google Calendar** - read your calendar AND create/move/delete events
+  (changes that affect other people require your confirmation).
+- **Gmail** - read and search your inbox, save drafts, and **send email**
+  (sending always asks for your confirmation first). No delete/trash.
+- **Stripe** - read your balance/charges/payouts/customers/disputes/invoices,
+  and **issue refunds / cancel subscriptions** (these are the most strictly
+  guarded actions - see "two-factor confirmation" below). TEST MODE by default.
+- **Your files** - read, create, edit, organize, and "delete" (to a recoverable
+  trash) files inside one folder you control.
+
+The riskiest actions (refunds, permanent-feeling changes) are protected by a
+**two-factor confirmation**: a Confirm click PLUS a 6-digit code from an
+authenticator app. **No accounts or API keys are required just to run it** -
+everything works in a clearly-labeled "stub mode" out of the box until you
+connect real accounts.
 
 See `PRD-JARVIS.md` for the full product plan. This README covers getting
-JARVIS running, with or without a Google account connected.
+JARVIS running, with or without real accounts connected.
 
 ---
 
@@ -379,7 +393,7 @@ backend automatically and the rest of the app behaves identically either way.
 
 ---
 
-## 10. What's in this Phase 1 build
+## 10. What's in this build (Phases 0-4)
 
 - **`app/`** - Electron main process + preload bridge (window, IPC). Connects
   all skills and surfaces the live cost meter / budget status at startup.
@@ -395,19 +409,25 @@ backend automatically and the rest of the app behaves identically either way.
 - **`skills/`** - MCP client plumbing and the skill registry. Built-in
   integrations: `skills/google-calendar/` (read + write events),
   `skills/gmail/` (read, draft, and send - send is Tier 2 with mandatory
-  confirmation), and `skills/stripe/` (read-only, TEST MODE by default).
+  confirmation), `skills/stripe/` (read-only by default, plus refunds /
+  subscription cancellations as Tier 3 with two-factor confirmation; TEST
+  MODE by default), and `skills/filesystem/` (read/create/edit/move/"delete"
+  within one scoped folder; deletes go to a recoverable trash).
 - **`voice/`** - Pluggable voice adapter interface. Currently ships the
   text-only fallback (FR-1.6) - full voice arrives in a later phase.
 - **`store/`** - SQLite access for conversations, the activity log, long-term
   memory, the cost ledger (with budget-cap status), and settings.
 - **`security/`** - The credential vault wrapper described above, storing
-  Google OAuth tokens and (optionally) a Stripe API key.
+  Google OAuth tokens, (optionally) a Stripe API key, and the TOTP secret for
+  two-factor confirmation (`security/totp.ts`).
 - **`config/`** - Reads `.env` and exposes typed configuration to the rest of
   the app, including the time zone, Google OAuth, Stripe, and budget settings.
 - **`test/`** - Automated tests covering config, permission tiers (including
-  Tier 2/3 refusal and confirmation flows), the store, the vault, the
-  tool-use loop, the agent's stub-mode flow, the Google Calendar/Gmail/Stripe
-  skills' stub modes, Gmail send confirmation, and the budget cap.
+  Tier 2/3 refusal, the confirmation flow, and Tier 3 two-factor/TOTP), the
+  store, the vault, the tool-use loop, the agent's stub-mode flow, the Google
+  Calendar/Gmail/Stripe skills' stub modes, Gmail send confirmation, Stripe
+  refund/cancel (with the FR-5.4 denylist), the filesystem skill's
+  path-safety and trash-on-delete behavior, and the budget cap. (124 tests.)
 
 ---
 
