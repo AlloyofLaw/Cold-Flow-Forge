@@ -6,8 +6,9 @@
   "main": "dist/app/main.js",
   "type": "commonjs",
   "scripts": {
-    "build": "tsc -p tsconfig.json && npm run bundle-renderer && npm run copy-assets",
+    "build": "tsc -p tsconfig.json && npm run bundle-renderer && npm run bundle-preload && npm run copy-assets",
     "bundle-renderer": "esbuild ui/renderer.ts --bundle --platform=browser --format=iife --target=es2020 --outfile=dist/ui/renderer.js",
+    "bundle-preload": "esbuild app/preload.ts --bundle --platform=node --format=cjs --target=node22 --external:electron --outfile=dist/app/preload.js",
     "copy-assets": "node scripts/copy-ui-assets.js",
     "start": "npm run build && electron .",
     "dev": "npm run build && electron . --enable-logging",
