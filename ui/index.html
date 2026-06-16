@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+    <title>JARVIS</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-dot" id="status-dot"></span>
+          <span class="brand-name">JARVIS</span>
+        </div>
+        <div class="status-line" id="status-line">Starting…</div>
+      </header>
+
+      <main class="layout">
+        <section class="panel conversation-panel">
+          <h2>Conversation</h2>
+          <div class="conversation" id="conversation"></div>
+          <form id="message-form" class="message-form">
+            <input
+              id="message-input"
+              type="text"
+              placeholder="Type a message to JARVIS…"
+              autocomplete="off"
+            />
+            <button type="submit">Send</button>
+          </form>
+        </section>
+
+        <aside class="panel sidebar">
+          <div class="sidebar-section">
+            <h2>Status</h2>
+            <dl class="status-grid" id="status-grid">
+              <dt>Voice</dt>
+              <dd id="status-voice">-</dd>
+              <dt>Brain</dt>
+              <dd id="status-brain">-</dd>
+              <dt>Cost today</dt>
+              <dd id="status-cost-today">-</dd>
+              <dt>Cost this month</dt>
+              <dd id="status-cost-month">-</dd>
+              <dt>Budget cap</dt>
+              <dd id="status-budget">-</dd>
+            </dl>
+            <p class="budget-warning" id="status-budget-warning" hidden></p>
+          </div>
+
+          <div class="sidebar-section">
+            <h2>Activity Log</h2>
+            <div class="activity-log" id="activity-log"></div>
+          </div>
+
+          <div class="sidebar-section">
+            <h2>Settings</h2>
+            <p class="settings-stub">
+              Settings panel coming in a later phase. Edit <code>.env</code>
+              (copied from <code>.env.example</code>) to configure JARVIS.
+            </p>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <div class="modal-overlay" id="confirmation-overlay" hidden>
+      <div class="modal confirmation-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmation-title">
+        <h2 id="confirmation-title">JARVIS needs your confirmation</h2>
+        <p class="confirmation-tier" id="confirmation-tier"></p>
+        <p class="confirmation-description" id="confirmation-description"></p>
+        <div class="confirmation-totp" id="confirmation-totp" hidden>
+          <label for="confirmation-totp-input">
+            Two-factor code (from Google Authenticator) - required for this action (R-2a). Never speak this code aloud.
+          </label>
+          <input
+            type="text"
+            id="confirmation-totp-input"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="6"
+            placeholder="6-digit code"
+            autocomplete="one-time-code"
+          />
+        </div>
+        <div class="confirmation-actions">
+          <button type="button" class="btn-cancel" id="confirmation-cancel">Cancel</button>
+          <button type="button" class="btn-confirm" id="confirmation-confirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>

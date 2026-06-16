@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+ui/dist/
+*.tsbuildinfo
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Local data (SQLite db files, dev credential vault fallback)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+data/
+.jarvis-dev-vault*
+
+# Local Filesystem skill trash (FR-6.5) - in case the allowed folder ever
+# points inside the repo during local testing.
+.jarvis-trash/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Test/coverage
+coverage/
