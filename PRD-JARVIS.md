@@ -49,6 +49,7 @@ JARVIS also has a **local companion UI** — a desktop window that runs on your 
 
 ### 3.2 Goals (v2+ — Future, documented but not built first)
 - Additional integrations: banking (Plaid), CRM, Notion/Slack/Discord, smart home, browser automation, project management tools.
+- **Knowledge "second brain" orchestration**: JARVIS becomes the voice-first orchestrator of an existing Obsidian vault + `graphify` knowledge-graph + Claude stack, so one request can fan out across notes, the graph, and the other skills. Detailed plan in **Phase 6a** (Section 14).
 - Multi-step autonomous workflows ("every Monday, summarize my week and email me a digest").
 - Mobile companion app / remote access to JARVIS when away from the local machine.
 - Long-term memory ("JARVIS remembers I prefer 30-min meetings, never schedules before 9am").
@@ -371,6 +372,48 @@ Each phase is a complete, demoable milestone — and each can be handed to an AI
 
 ### Phase 6+ — New Integrations (Ongoing)
 - Each new integration is just another MCP server: connect credentials → assign tiers → starts read-only → upgrade as trust builds.
+
+#### Phase 6a — Obsidian + graphify knowledge orchestration *(planned)*
+**Goal:** make JARVIS the single voice-first **orchestrator** of an existing
+"second brain" stack — an Obsidian vault, the `graphify` knowledge-graph CLI,
+and Claude — so one request can fan out across notes, the graph, and the
+other skills (Calendar/Gmail) under the same permission tiers. This is new
+*skills*, not new architecture: it reuses the existing MCP framework
+(Section 6.7), the Brain's tool-use loop (Section 6.2), and the permission
+model (Section 8).
+
+- **Obsidian skill (MCP):** an Obsidian vault is just a directory of Markdown
+  files, so this is a thin extension of the **Local Filesystem skill**
+  (Section 6.6) pointed at (or scoped to) the vault root.
+  - `search_notes`, `read_note`, `list_notes`, `get_backlinks` → **Tier 0**
+    (read-only).
+  - `create_note`, `append_to_note` (new content / new files) → **Tier 1**.
+  - `edit_note` / `overwrite_note` on an **existing** note → **Tier 2**
+    (state-dependent, same `resolveWithinRoot` path-safety + existing-file
+    classifier hook already used by the filesystem skill). Deletes go to
+    `.jarvis-trash/`, never permanent.
+  - Reuses `config.allowedDirectory` (or a dedicated `JARVIS_OBSIDIAN_VAULT`
+    setting) so the vault is an explicit, opt-in root — JARVIS can never
+    wander outside it.
+- **graphify skill (MCP):** wrap the `graphify` CLI as tools.
+  - `graphify query`, `graphify path`, `graphify explain` → **Tier 0**
+    (read-only; they only read the existing graph).
+  - `graphify update .` → **Tier 1** (rewrites the local graph artifacts;
+    reversible, internal, AST-only/no API cost).
+  - The CLI is invoked as a local subprocess; no external network egress, so
+    no new credential surface.
+- **Claude as the conductor (already true):** the Brain already runs on Claude
+  via the tool-use loop, so adding these skills simply gives the existing
+  orchestrator more tools to reason over — no second, separate agent.
+- **Example end-to-end request:** *"Summarize today's meeting notes, find every
+  note that links to the 'Cold Flow' project, refresh the knowledge graph, and
+  draft a follow-up email."* → Obsidian (`search_notes`/`read_note`) →
+  graphify (`path`/`update`) → Gmail (`create_draft`, Tier 1) — each step still
+  passing through tier confirmations.
+- **Guardrails (unchanged):** all the existing rules apply — learned/adaptive
+  behavior (Section 3.2) can change suggestions/defaults but can NEVER lower a
+  tier or skip a Tier 2/3 confirmation; edits to existing notes are reversible
+  via trash; the vault is a single explicit allowed root.
 
 ---
 
