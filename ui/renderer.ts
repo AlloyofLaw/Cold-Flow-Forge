@@ -9,7 +9,25 @@
 import type { ConfirmationRequestEvent, JarvisBridge, JarvisStatus } from "../app/preload";
 import type { ConversationMessage } from "../store/conversations";
 import type { ActivityLogEntry } from "../store/activityLog";
-import { tierLabel } from "../core/permissions";
+
+// Inlined from core/permissions.ts `tierLabel`. The renderer runs in the
+// browser context (no Node `require`), so it must NOT import from core/* at
+// runtime - those modules pull in Node-only dependencies. The four permission
+// tiers (0-3) are stable, so we map them locally instead.
+function tierLabel(tier: number): string {
+  switch (tier) {
+    case 0:
+      return "Read-only";
+    case 1:
+      return "Reversible & internal";
+    case 2:
+      return "External-facing / hard to reverse";
+    case 3:
+      return "Financial, destructive, or irreversible";
+    default:
+      return "Unknown";
+  }
+}
 
 declare global {
   interface Window {
