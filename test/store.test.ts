@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import Database from "better-sqlite3";
+import { JarvisDatabase } from "../store/database";
 import { SCHEMA_SQL } from "../store/schema";
 import { recordActivity, listRecentActivity } from "../store/activityLog";
 import { recordMessage, getSessionMessages, listRecentMessages } from "../store/conversations";
@@ -13,10 +13,10 @@ import {
 import { getSetting, setSetting, getSettingJson, setSettingJson, getAllSettings } from "../store/settings";
 import { PermissionTier } from "../core/permissions";
 
-let db: Database.Database;
+let db: JarvisDatabase;
 
 beforeEach(() => {
-  db = new Database(":memory:");
+  db = new JarvisDatabase(":memory:");
   db.exec(SCHEMA_SQL);
 });
 

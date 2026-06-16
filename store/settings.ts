@@ -2,7 +2,7 @@
 // Settings access (PRD Section 12: settings table) - simple key/value store.
 // ---------------------------------------------------------------------------
 
-import type { Database } from "better-sqlite3";
+import type { Database } from "./database";
 import { getDb } from "./database";
 
 interface SettingRow {
@@ -48,7 +48,7 @@ export function setSettingJson(key: string, value: unknown, database: Database =
 
 /** List all settings as a plain key/value map. */
 export function getAllSettings(database: Database = getDb()): Record<string, string> {
-  const rows = database.prepare(`SELECT key, value FROM settings`).all() as SettingRow[];
+  const rows = database.prepare(`SELECT key, value FROM settings`).all() as unknown as SettingRow[];
   const result: Record<string, string> = {};
   for (const row of rows) {
     result[row.key] = row.value;

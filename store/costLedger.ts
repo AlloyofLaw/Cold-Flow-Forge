@@ -2,7 +2,7 @@
 // Cost ledger access (PRD FR-2.8 / FR-8.1 / FR-8.2): per-call usage + cost.
 // ---------------------------------------------------------------------------
 
-import type { Database } from "better-sqlite3";
+import type { Database } from "./database";
 import { getDb } from "./database";
 
 export interface CostEntryInput {
@@ -67,7 +67,7 @@ export function recordCost(entry: CostEntryInput, database: Database = getDb()):
 export function getTotalCostSince(sinceIso: string, database: Database = getDb()): number {
   const row = database
     .prepare(`SELECT COALESCE(SUM(estimated_cost_usd), 0) AS total FROM cost_ledger WHERE created_at >= ?`)
-    .get(sinceIso) as { total: number };
+    .get(sinceIso) as unknown as { total: number };
   return row.total;
 }
 
@@ -91,7 +91,7 @@ export function getTodayCost(database: Database = getDb()): number {
 export function listRecentCosts(limit = 50, database: Database = getDb()): CostEntry[] {
   const rows = database
     .prepare(`SELECT * FROM cost_ledger ORDER BY id DESC LIMIT ?`)
-    .all(limit) as CostRow[];
+    .all(limit) as unknown as CostRow[];
   return rows.map(rowToEntry);
 }
 

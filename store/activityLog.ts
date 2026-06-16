@@ -2,7 +2,7 @@
 // Activity log access (append-only audit trail, PRD FR-2.6 / SEC-5).
 // ---------------------------------------------------------------------------
 
-import type { Database } from "better-sqlite3";
+import type { Database } from "./database";
 import { getDb } from "./database";
 import type { PermissionTier } from "../core/permissions";
 
@@ -80,7 +80,7 @@ export function recordActivity(entry: ActivityLogRecordInput, database: Database
 export function listRecentActivity(limit = 50, database: Database = getDb()): ActivityLogEntry[] {
   const rows = database
     .prepare(`SELECT * FROM activity_log ORDER BY id DESC LIMIT ?`)
-    .all(limit) as ActivityLogRow[];
+    .all(limit) as unknown as ActivityLogRow[];
 
   return rows.map(rowToEntry);
 }

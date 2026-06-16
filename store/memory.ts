@@ -2,7 +2,7 @@
 // Long-term memory access (PRD FR-2.2): editable/erasable key-value facts.
 // ---------------------------------------------------------------------------
 
-import type { Database } from "better-sqlite3";
+import type { Database } from "./database";
 import { getDb } from "./database";
 
 export interface MemoryEntry {
@@ -51,7 +51,7 @@ export function getMemory(key: string, database: Database = getDb()): MemoryEntr
 export function listMemory(database: Database = getDb()): MemoryEntry[] {
   const rows = database
     .prepare(`SELECT * FROM memory ORDER BY updated_at DESC`)
-    .all() as MemoryRow[];
+    .all() as unknown as MemoryRow[];
   return rows.map(rowToEntry);
 }
 

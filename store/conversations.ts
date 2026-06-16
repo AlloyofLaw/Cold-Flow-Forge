@@ -2,7 +2,7 @@
 // Conversation transcript access (PRD Section 12: conversations table).
 // ---------------------------------------------------------------------------
 
-import type { Database } from "better-sqlite3";
+import type { Database } from "./database";
 import { getDb } from "./database";
 
 export type ConversationRole = "user" | "assistant" | "system";
@@ -54,7 +54,7 @@ export function getSessionMessages(
 ): ConversationMessage[] {
   const rows = database
     .prepare(`SELECT * FROM conversations WHERE session_id = ? ORDER BY id ASC`)
-    .all(sessionId) as ConversationRow[];
+    .all(sessionId) as unknown as ConversationRow[];
 
   return rows.map(rowToMessage);
 }
@@ -66,7 +66,7 @@ export function listRecentMessages(
 ): ConversationMessage[] {
   const rows = database
     .prepare(`SELECT * FROM conversations ORDER BY id DESC LIMIT ?`)
-    .all(limit) as ConversationRow[];
+    .all(limit) as unknown as ConversationRow[];
 
   return rows.map(rowToMessage);
 }
