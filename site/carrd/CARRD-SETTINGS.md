@@ -1,0 +1,42 @@
+# Carrd setup checklist — coldflowforge.com
+
+The two embed files in this folder cover everything that lives *inside* the page.
+This checklist covers the settings only the Carrd editor can control.
+
+## 1. Paste the embeds
+
+- **Main page:** replace your current embed's code with `main-embed.html` (the whole file).
+- **Privacy page:** in Carrd, add a new **section** and name it exactly `privacy`
+  (the main page's footer links to `#privacy`). Inside it, add an Embed element and
+  paste `privacy-embed.html`. The "Back to site" link points to `#home` — if your
+  main section has a different name, change that href to match (`#` + section name).
+
+## 2. Site settings (Main menu → Settings)
+
+| Setting | Recommended value |
+|---|---|
+| Title | `Cold Flow Forge — Controlled Outbound for B2B Agencies` |
+| Description (meta) | `15–20 qualified sales calls in 90 days for B2B agencies — controlled cold outbound with no big upfront retainer, and your domain never at risk.` |
+| Share image (OG) | Upload a 1200×630 image — dark background `#101216`, the ember diamond mark + "COLD FLOW FORGE". This is what shows when the link is shared on LinkedIn — worth doing properly. |
+| Favicon | The ember diamond mark on `#101216`. |
+| Background | Set the page background color to `#101216` so it matches the embed even before scripts run. |
+| Language | `en` |
+
+## 3. After publishing, test these
+
+- [ ] Load the site with JavaScript disabled (or with an ad blocker in aggressive mode) — all content should still be visible (the reveal animation is now JS-gated instead of hiding content by default).
+- [ ] On Windows (visible scrollbars): no horizontal scrollbar / side-to-side jiggle.
+- [ ] Click a CTA button within the first second of page load — it should either open the Calendly popup or fall back to navigating to the Calendly page. No console errors.
+- [ ] Click the video — the YouTube player should load and autoplay on click (it no longer loads ~1MB of player code up front).
+- [ ] Footer: email link opens mail client; Privacy link jumps to the privacy section; "Back to site" returns.
+- [ ] Book a test call through the inline widget on a phone.
+- [ ] Paste the URL into LinkedIn's post composer — check the preview shows your title, description, and share image.
+
+## 4. Open TODOs in the code
+
+- `main-embed.html` — the stat tiles cite SparkToro but aren't linked yet. When you
+  have the exact report URL, follow the `TODO` comment above the `.statbar` block.
+- FAQ answers (especially the pricing one) are **drafts written to match the claims
+  already on the page** — read them and adjust anything that doesn't match how you
+  actually operate before publishing.
+- `privacy-embed.html` is a plain-language template — have a lawyer glance over it.
