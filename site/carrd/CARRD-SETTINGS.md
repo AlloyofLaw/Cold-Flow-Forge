@@ -8,8 +8,8 @@ This checklist covers the settings only the Carrd editor can control.
 - **Main page:** replace your current embed's code with `main-embed.html` (the whole file).
 - **Privacy page:** in Carrd, add a new **section** and name it exactly `privacy`
   (the main page's footer links to `#privacy`). Inside it, add an Embed element and
-  paste `privacy-embed.html`. The "Back to site" link points to `#home` — if your
-  main section has a different name, change that href to match (`#` + section name).
+  paste `privacy-embed.html`. The "Back to site" link points to `#` (the default/top
+  section on any Carrd setup) — change it to `#` + section name to target a specific one.
 
 ## 2. Site settings (Main menu → Settings)
 
@@ -29,6 +29,7 @@ This checklist covers the settings only the Carrd editor can control.
 - [ ] Click a CTA button within the first second of page load — it should either open the Calendly popup or fall back to navigating to the Calendly page. No console errors.
 - [ ] Click the video — the YouTube player should load and autoplay on click (it no longer loads ~1MB of player code up front).
 - [ ] Footer: email link opens mail client; Privacy link jumps to the privacy section; "Back to site" returns.
+- [ ] On a phone: scroll down — the sticky "Book my free audit" bar should slide up after the hero button passes, and slide away while the booking section is on screen.
 - [ ] Book a test call through the inline widget on a phone.
 - [ ] Paste the URL into LinkedIn's post composer — check the preview shows your title, description, and share image.
 
@@ -42,7 +43,8 @@ Every value you're likely to change has a searchable marker comment in `main-emb
 | `EDIT-2` | The three audit deliverables ("what you walk away with"). | Draft, edit freely |
 | `EDIT-3` | Sticky mobile CTA button text. | Draft |
 | `EDIT-5a/b/c` | Specificity slots in the process steps — comments show example rewrites; drop in your real numbers (list sizes, domain/inbox counts, warmup days, review cadence) when you can state them truthfully. | Waiting on your numbers |
-| Calendly URL | Appears 5× — find & replace `calendly.com/andrew-coldflowforge/30min`. | Set |
+| `EDIT-6` | The FAQ pricing answer. Like the guarantee, this is a commitment — make sure it matches how you actually charge. | Needs your confirmation |
+| Calendly URL | In 5 CTA links + the booking widget (11 occurrences) — find & replace `calendly.com/andrew-coldflowforge/30min`. | Set |
 
 ## 5. EDIT-4 — Calendly qualification questions (2-minute task)
 

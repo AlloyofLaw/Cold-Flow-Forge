@@ -10,7 +10,9 @@
    EDIT-2  Audit deliverables ("what you walk away with" list)
    EDIT-3  Sticky mobile CTA button text
    EDIT-5  Specificity slots — drop in your real numbers when ready
- The Calendly URL appears 5 times; to change it, find & replace
+   EDIT-6  FAQ pricing answer — a commitment, like the guarantee
+ The Calendly URL appears in 5 CTA links and the booking widget
+ (11 occurrences in total) — to change it, find & replace
  "calendly.com/andrew-coldflowforge/30min" across the whole file.
  (EDIT-4, the booking-form qualification questions, lives in the
  Calendly editor — exact questions in CARRD-SETTINGS.md.)
@@ -19,7 +21,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://assets.calendly.com">
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
 <style>
  #cff{
@@ -141,7 +143,7 @@
  #cff .audit .outcomes{margin:6px 0 10px;}
  #cff .stickycta{position:fixed;left:0;right:0;bottom:0;z-index:60;display:none;
  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
- background:rgba(16,18,22,.94);backdrop-filter:blur(8px);border-top:1px solid var(--steel-line);
+ background:rgba(16,18,22,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid var(--steel-line);
  transform:translateY(110%);visibility:hidden;transition:transform .25s ease,visibility .25s;}
  #cff .stickycta.on{transform:none;visibility:visible;}
  #cff .stickycta .cta{width:100%;justify-content:center;padding:13px 20px;}
@@ -175,6 +177,8 @@
  #cff.js .reveal{opacity:1;transform:none;transition:none;}
  #cff .cta,#cff .cta:hover{transform:none;}
  #cff .vsl .vplay:hover .play{transform:none;}
+ #cff .faq summary::after{transition:none;}
+ #cff .stickycta{transition:none;}
  }
 </style>
 
@@ -189,12 +193,12 @@
  <div class="wrap">
  <p class="eyebrow heat">Attention: B2B agency owners</p>
  <h1><span class="molten">WARNING:</span> Don't hire another cold email agency until you see this.</h1>
- <p class="sub">Most cold email agencies want <strong>$4,000 a month up front on a retainer</strong> — before they prove anything works. They brag about "booked" calls, but just blast out huge volume with no quality. Here's how to get <strong>15&ndash;20 qualified sales calls in 90 days</strong> — without a big retainer up front, and without cold email that makes you look cheap.</p>
+ <p class="sub">Most cold email agencies want <strong>$4,000 a month up front on a retainer</strong> — before they prove anything works. They brag about &ldquo;booked&rdquo; calls, but just blast out huge volume with no quality. Here's how to get <strong>15&ndash;20 qualified sales calls in 90 days</strong> — without a big retainer up front, and without cold email that makes you look cheap.</p>
 
  <div class="vsl">
  <div class="frame" id="cff-vsl">
  <button class="vplay" id="cff-vsl-play" type="button" aria-label="Play video: Cold Flow Forge — Andrew Nguyen">
- <img src="https://i.ytimg.com/vi/uj2Ac_NZ2sQ/maxresdefault.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/uj2Ac_NZ2sQ/hqdefault.jpg';">
+ <img src="https://i.ytimg.com/vi/uj2Ac_NZ2sQ/maxresdefault.jpg" alt="" fetchpriority="high" decoding="async" onerror="this.onerror=function(){this.style.display='none';};this.src='https://i.ytimg.com/vi/uj2Ac_NZ2sQ/hqdefault.jpg';">
  <span class="label"><span class="t">Watch the breakdown</span><span class="s">Andrew Nguyen &middot; Cold Flow Forge</span></span>
  <span class="play" aria-hidden="true"></span>
  </button>
@@ -211,7 +215,7 @@
       (add a { text-decoration:none; color:inherit; display:block; } rule for a.stat). -->
  <div class="statbar">
  <div class="stat"><div class="n">14%</div><div class="l">of agencies feel their pipeline is actually healthy</div><div class="src">SOURCE: SPARKTORO</div></div>
- <div class="stat"><div class="n">~70%</div><div class="l">name new business as their #1 challenge this year</div><div class="src">SOURCE: SPARKTORO</div></div>
+ <div class="stat"><div class="n">~70%</div><div class="l">name new business as their #1 challenge</div><div class="src">SOURCE: SPARKTORO</div></div>
  </div>
  </div>
  </header>
@@ -257,9 +261,9 @@
  </ul>
  <p class="reveal">It's not that cold email stopped working. The average reply rate is now just <strong>3&ndash;5%</strong>, and most cold emails get ignored — almost always because of <em>how</em> they're sent, not the channel. Bulk spray gets filtered. Disciplined outbound doesn't.</p>
  <p class="reveal">Cold Flow Forge works the opposite way. The risk sits on <strong>our</strong> side — tied to real, qualified calls we book and hold, not a retainer you keep paying whether we deliver or not.</p>
- <div class="cta-row">
- <a class="cta reveal" href="https://calendly.com/andrew-coldflowforge/30min" onclick="if(window.Calendly){Calendly.initPopupWidget({url:'https://calendly.com/andrew-coldflowforge/30min'});return false;}">See if your agency qualifies <span class="arr">&rarr;</span></a>
- <div class="cta-meta">Free 30-min pipeline audit · no retainer · no pitch deck</div>
+ <div class="cta-row reveal">
+ <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min" onclick="if(window.Calendly){Calendly.initPopupWidget({url:'https://calendly.com/andrew-coldflowforge/30min'});return false;}">See if your agency qualifies <span class="arr">&rarr;</span></a>
+ <div class="cta-meta">Free 30-min pipeline audit · no retainer · nothing to prepare</div>
  </div>
  </div>
  </section>
@@ -336,8 +340,8 @@
  </ul>
  </div>
  <p class="reveal">If there's a real path, we'll map it together. If there isn't, you'll know that too. Either way, you stop guessing.</p>
- <div class="cta-row">
- <a class="cta reveal" href="https://calendly.com/andrew-coldflowforge/30min" onclick="if(window.Calendly){Calendly.initPopupWidget({url:'https://calendly.com/andrew-coldflowforge/30min'});return false;}">Book my free pipeline audit <span class="arr">&rarr;</span></a>
+ <div class="cta-row reveal">
+ <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min" onclick="if(window.Calendly){Calendly.initPopupWidget({url:'https://calendly.com/andrew-coldflowforge/30min'});return false;}">Book my free pipeline audit <span class="arr">&rarr;</span></a>
  <div class="cta-meta">Pick a time → 30-min call → we look at your pipeline, offer and ICP together.</div>
  </div>
  </div>
@@ -370,7 +374,9 @@
  <div class="faq reveal">
  <details>
  <summary>If there's no big retainer, how do you actually get paid?</summary>
- <div class="a"><p>Our compensation is tied to qualified calls that book and hold — not a flat monthly fee you pay regardless of results. The exact structure depends on your offer and deal size, and we walk through it openly on the audit call. The short version: we don't get paid properly unless your calendar fills with the right people.</p></div>
+ <!-- EDIT-6: This answer is a commitment, like the guarantee. Make sure it
+      matches how you actually charge before publishing. -->
+ <div class="a"><p>Our compensation is tied to qualified calls that book and hold — not a flat monthly fee you pay regardless of results. The exact structure depends on your offer and deal size, and we walk through it openly on the audit call. The short version: we don't get paid in full unless your calendar fills with the right people.</p></div>
  </details>
  <details>
  <summary>Will this put my domain or sender reputation at risk?</summary>
@@ -393,8 +399,8 @@
  <div class="a"><p>Then we'll tell you that on the audit call — for free, before anything gets built. Sometimes the offer needs sharpening first, or the leak is after calls book, not before. If outbound isn't the right move yet, you'll leave knowing what to fix first instead of paying to find out the hard way.</p></div>
  </details>
  </div>
- <div class="cta-row">
- <a class="cta reveal" href="https://calendly.com/andrew-coldflowforge/30min" onclick="if(window.Calendly){Calendly.initPopupWidget({url:'https://calendly.com/andrew-coldflowforge/30min'});return false;}">Get my questions answered live <span class="arr">&rarr;</span></a>
+ <div class="cta-row reveal">
+ <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min" onclick="if(window.Calendly){Calendly.initPopupWidget({url:'https://calendly.com/andrew-coldflowforge/30min'});return false;}">Get my questions answered live <span class="arr">&rarr;</span></a>
  <div class="cta-meta">The audit is the fastest way to get a straight answer for your agency.</div>
  </div>
  </div>
