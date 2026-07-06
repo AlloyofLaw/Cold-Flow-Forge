@@ -32,7 +32,35 @@ This checklist covers the settings only the Carrd editor can control.
 - [ ] Book a test call through the inline widget on a phone.
 - [ ] Paste the URL into LinkedIn's post composer — check the preview shows your title, description, and share image.
 
-## 4. Open TODOs in the code
+## 4. Editable values in the code (search for "EDIT-")
+
+Every value you're likely to change has a searchable marker comment in `main-embed.html`:
+
+| Marker | What it controls | Status |
+|---|---|---|
+| `EDIT-1` | The guarantee wording in the ember box. Currently a common performance-agency guarantee ("we keep working for free until we do") written to match the claims already on your page. **Confirm you'll honor it or rewrite it before publishing.** | Needs your terms |
+| `EDIT-2` | The three audit deliverables ("what you walk away with"). | Draft, edit freely |
+| `EDIT-3` | Sticky mobile CTA button text. | Draft |
+| `EDIT-5a/b/c` | Specificity slots in the process steps — comments show example rewrites; drop in your real numbers (list sizes, domain/inbox counts, warmup days, review cadence) when you can state them truthfully. | Waiting on your numbers |
+| Calendly URL | Appears 5× — find & replace `calendly.com/andrew-coldflowforge/30min`. | Set |
+
+## 5. EDIT-4 — Calendly qualification questions (2-minute task)
+
+The Calendly API doesn't allow editing booking-form questions, so add these by hand:
+**Calendly → Event types → Cold Flow Pipeline Audit → Booking page options → Invitee questions.**
+
+1. **"Roughly, what's your agency's current monthly revenue?"** — multiple choice, required:
+   `Under $10k` / `$10k–$25k` / `$25k–$50k` / `$50k–$100k` / `$100k+`
+2. **"Which best describes your core offer?"** — multiple choice, required:
+   `Proven — happy clients and results behind it` / `Newer — still validating`
+3. **"Where do most new clients come from today?"** — multiple choice, required:
+   `Referrals & word of mouth` / `Inbound (content, SEO)` / `Outbound` / `Paid ads` / `Honestly, it's unpredictable`
+4. Keep the existing optional "Please share anything that will help prepare for our meeting." as the last question.
+
+Already done via the API: the event's **description** now sells the audit as a working
+session with three concrete deliverables (it was empty). Edit it anytime in Calendly.
+
+## 6. Open TODOs in the code
 
 - `main-embed.html` — the stat tiles cite SparkToro but aren't linked yet. When you
   have the exact report URL, follow the `TODO` comment above the `.statbar` block.
