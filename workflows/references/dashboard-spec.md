@@ -21,15 +21,17 @@ All amounts CAD, formatted `$1,234`. Negative/over-budget in the dataviz "bad" c
 
 5. **Biggest movers** — top 3 categories by `|mom_delta|` (or `vs_avg`), one line each in plain words: "Dining & Takeout up $142 vs last month". Skip on baseline month.
 
-6. **Budget vs actual** — when `budget_vs_actual` exists: per-category progress bars, over-budget flagged. When `budget_proposal` exists instead: render the proposal as a table and note that it's pending approval in chat.
+6. **Budget vs actual** — when `budget_vs_actual` exists: per-category progress bars, over-budget flagged. (`budget_proposal` should be gone by render time — the workflow approves budgets and re-runs metrics first; if a proposal still appears, render it as a table marked "proposed".)
 
-7. **Subscriptions & recurring** — table from `recurring`: merchant, monthly cost, months seen, price-creep badge when set. Footer: total recurring per month — "these renew whether you think about them or not."
+7. **Subscriptions & recurring** — table from `recurring`: merchant, monthly cost, months seen, price-creep badge when set. Footer: `recurring_total_monthly` — "these renew whether you think about them or not."
 
 8. **Top merchants & big-ticket** — two columns (stack on mobile): top-10 merchants bar list; big-ticket table (date, merchant, amount, category).
 
 9. **Business spending** — `business.total` and by-merchant list. If zero, one quiet line: "No business spending this month."
 
-10. **Footnotes** — `uncategorized_count` if nonzero, `usd_transactions` if any, data sources included this run, generation date.
+10. **Footnotes** — `uncategorized_count` if nonzero, `usd_transactions` if any (show category/business flag — a USD business expense must not silently vanish from the business story), data sources included this run, generation date.
+
+When a month's data source is missing (e.g. no Rogers screenshot), the header banner should size the gap: mention that card's most recent included month and its total (from the ledger), so the reader knows roughly what's missing.
 
 ## Tone
 

@@ -7,7 +7,9 @@ description: Run the monthly money review — parse Andrew's RBC CSV exports and
 
 This skill is a thin trigger. The single source of truth is the WAT workflow:
 
-**Read `workflows/monthly_money.md` and follow it exactly.**
+**Read `workflows/monthly_money.md` (repo root, NOT inside this skill directory) and follow it exactly.**
+
+All paths in the workflow (`workflows/`, `tools/`, `finances/`, `.tmp/`) are relative to the repository root.
 
 That SOP covers intake (RBC CSVs + Rogers screenshots), the deterministic tools (`tools/parse_rbc.py`, `tools/money_ledger.py` — never do money math yourself), merchant-memory categorization, budget handling, dashboard rendering (`workflows/references/dashboard-spec.md`, load the dataviz skill first), evergreen-artifact publishing, and commit/push.
 

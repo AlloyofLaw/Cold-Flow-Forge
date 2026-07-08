@@ -371,14 +371,20 @@ def cmd_metrics(args, store):
             current = round(sum(per_month[month]), 2)
             prev_charge = (round(sum(per_month[months_seen[-2]]), 2)
                            if len(months_seen) >= 2 else None)
+            # price creep only makes sense for fixed-price charges; variable
+            # spend (groceries, gas) recurring at the same merchant is not a
+            # price increase, just a different basket
+            creep_cats = {"Subscriptions", "Utilities/Phone", "Health", "Housing", "Debt Payments"}
             recurring.append({
                 "merchant": merchant, "category": cat,
                 "monthly_cost": current, "months_seen": months_seen,
                 "previous_cost": prev_charge,
                 "price_creep": (round(current - prev_charge, 2)
-                                if prev_charge and current > prev_charge * 1.01 else None),
+                                if prev_charge and cat in creep_cats
+                                and current > prev_charge * 1.01 else None),
             })
     recurring.sort(key=lambda r: -r["monthly_cost"])
+    recurring_total = round(sum(r["monthly_cost"] for r in recurring), 2)
 
     # -- budgets: actuals vs targets, or a proposal from baseline when unset.
     # Proposed cuts land on discretionary categories (85%); essentials keep 100%.
@@ -424,6 +430,10 @@ def cmd_metrics(args, store):
         },
         "freed_for_business": {
             "current": round(income - personal_spend, 2),
+            "previous": next((h["freed"] for h in freed_history if h["month"] == prev_month), None),
+            "mom_delta": (round((income - personal_spend)
+                                - next(h["freed"] for h in freed_history if h["month"] == prev_month), 2)
+                          if prev_month else None),
             "definition": "income minus all personal spending — what was available to redirect to the business",
             "history": freed_history,
         },
@@ -433,10 +443,13 @@ def cmd_metrics(args, store):
             "by_merchant": spend_by(business, lambda r: r["merchant"] or r["recipient"]),
         },
         "recurring": recurring,
+        "recurring_total_monthly": recurring_total,
+        # e-transfers (rent etc.) are payments to people, not merchants, and
+        # they dwarf the merchant bar scale — keep the list to actual merchants
         "top_merchants": sorted(
             ({"merchant": k, "total": v} for k, v in
-             spend_by([r for r in expense_rows if r["amount"] < 0],
-                      lambda r: r["merchant"] or r["recipient"]).items()),
+             spend_by([r for r in expense_rows if r["amount"] < 0 and not r["recipient"]],
+                      lambda r: r["merchant"]).items()),
             key=lambda x: -x["total"])[:10],
         "big_ticket": sorted(
             ({"date": r["date"], "merchant": r["merchant"] or r["recipient"],
@@ -448,7 +461,8 @@ def cmd_metrics(args, store):
         "budget_proposal": proposal,
         "uncategorized_count": sum(1 for r in cur if r["category"] == "Uncategorized"),
         "usd_transactions": [
-            {"date": r["date"], "description": r["description"], "amount": r["amount"]}
+            {"date": r["date"], "description": r["description"], "amount": r["amount"],
+             "category": r["category"], "business": r["business"]}
             for r in usd_rows if r["month"] == month],
     }
     print(json.dumps(metrics, indent=2))

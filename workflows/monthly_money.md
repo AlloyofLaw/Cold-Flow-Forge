@@ -45,7 +45,7 @@ Add `--month-only` if the export deliberately spans extra months you don't want 
 
 ### 3. Resolve unknowns with the user
 
-Batch ALL unknown merchants and recipients into as few `AskUserQuestion` rounds as possible (aim for 1–2; group ~4 per call). For each, show the merchant/recipient with an example transaction (date + amount helps recognition) and offer likely categories from `finances/config.json` — put your best guess first. Ask two things implicitly per merchant: category, and whether it's a business expense (offer "Business" as a category option; anything categorized Business gets `business: true`).
+Batch ALL unknown merchants and recipients into as few `AskUserQuestion` rounds as possible (~4 merchants per call; the first month may legitimately take 4–5 rounds — that's expected, and memory makes later months one round or zero). For each, show the merchant/recipient with an example transaction (date + amount helps recognition) and offer likely categories from `finances/config.json` — put your best guess first. Ask two things implicitly per merchant: category, and whether it's a business expense (offer "Business" as a category option; anything categorized Business gets `business: true`).
 
 Write every answer into `finances/memory.json`:
 
@@ -74,7 +74,7 @@ Emits the full metrics JSON: cash flow, per-category totals with MoM delta and 3
 
 ### 6. Budgets
 
-- **Baseline month** (`is_baseline_month: true` or empty `budgets.targets`): metrics includes `budget_proposal` — baseline spending with discretionary categories trimmed to 85%, rounded to $5. Present it via `AskUserQuestion` (accept as-is / adjust), then write approved numbers to `finances/budgets.json` `targets`.
+- **Baseline month** (`is_baseline_month: true` or empty `budgets.targets`): metrics includes `budget_proposal` — baseline spending with discretionary categories trimmed to 85%, rounded to $5. Present it via `AskUserQuestion` (accept as-is / adjust), write approved numbers to `finances/budgets.json` `targets`, then **re-run metrics** so the dashboard renders the approved budget vs actual instead of a stale proposal.
 - **Later months**: dashboard shows budget vs actual per category. If he's consistently over/under somewhere by a wide margin, suggest a target adjustment — budgets should track reality or they get ignored.
 
 ### 7. Render the dashboard
@@ -116,4 +116,6 @@ When a tool errors or a number is wrong: read the trace, fix the script, re-run 
 
 <!-- Append dated entries: format quirks, parsing failures, decisions. Newest first. -->
 
+- 2026-07-08: Synthetic-data eval (3 scenarios, with-skill vs no-skill): all ground-truth totals reconciled exactly. Fixes applied from the runs: price-creep flags restricted to fixed-price categories (was flagging grocery/gas variance), `recurring_total_monthly` and freed-for-business MoM delta added to metrics, e-transfers removed from top-merchants (rent dwarfed the scale), budgets now approved *before* the dashboard renders (re-run metrics after writing targets), USD rows carry category/business so a USD business expense stays visible.
+- 2026-07-08: The graphify CLI is not installed in cloud containers even though repo hooks demand it — when `graphify` is unavailable, skip `graphify update .` and note it in the commit message rather than failing the run.
 - 2026-07-08: Initial build. RBC CSV column set assumed as `"Account Type","Account Number","Transaction Date","Cheque Number","Description 1","Description 2","CAD$","USD$"` — verify against the first real export and update `tools/parse_rbc.py` + this note if it differs.

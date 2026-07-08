@@ -3,21 +3,55 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "hey, got my june exports done. chequing and visa csvs are in .tmp/monthly-money/2026-06/ — run my monthly money review",
+      "prompt": "hey, got my june exports done. chequing and visa csvs are in .tmp/monthly-money/2026-06/ \u2014 run my monthly money review",
       "expected_output": "Runs parse_rbc.py and money_ledger.py (ingest/commit/metrics), asks the user to categorize unknown merchants in batched questions, updates memory.json, appends to ledger.csv, renders the dashboard HTML per dashboard-spec, archives to finances/reports/2026-06.html. Baseline month: proposes budgets. Totals must reconcile with the CSVs and transfers/CC payments must be excluded.",
-      "files": [".tmp/monthly-money/2026-06/rbc_chequing.csv", ".tmp/monthly-money/2026-06/rbc_visa.csv"]
+      "files": [
+        ".tmp/monthly-money/2026-06/rbc_chequing.csv",
+        ".tmp/monthly-money/2026-06/rbc_visa.csv"
+      ],
+      "assertions": [
+        "metrics.json cash_flow.income equals 4900.00 (two ACME payroll deposits)",
+        "metrics.json total spend (personal_spend + business_spend) equals 2363.97 \u2014 the CSV + Rogers ground truth",
+        "ledger.csv contains no excluded rows: no 'PAYMENT - THANK YOU', 'WWW PAYMENT - CREDIT CARD', or 'WWW TRANSFER' descriptions",
+        "Rogers screenshot transcribed exactly: 3 rows with source=rogers_screenshot, amounts -23.45, -12.99, -8.72",
+        "budgets.json targets are populated (budget proposal was accepted and saved)",
+        "dashboard.html exists, is self-contained (no http(s) resource loads), and shows a freed-for-business headline",
+        "memory.json learned the June merchants, including GODADDY marked business=true",
+        "rent e-transfer to JANE LANDLORD categorized as Housing, 1200.00"
+      ]
     },
     {
       "id": 2,
       "prompt": "where did my money go in july? files are in .tmp/monthly-money/2026-07/ (same two accounts). also heads up i think netflix raised their price again",
       "expected_output": "Second-month run: fewer categorization questions (memory hits), month-over-month deltas populated, recurring section detects the Netflix price creep planted in fixtures, budget vs actual rendered against approved targets, freed-for-business trend has two points.",
-      "files": [".tmp/monthly-money/2026-07/rbc_chequing.csv", ".tmp/monthly-money/2026-07/rbc_visa.csv"]
+      "files": [
+        ".tmp/monthly-money/2026-07/rbc_chequing.csv",
+        ".tmp/monthly-money/2026-07/rbc_visa.csv"
+      ],
+      "assertions": [
+        "metrics.json cash_flow.income equals 4900.00 and total spend equals 2345.02 (RBC 2239.53 + Rogers 105.49)",
+        "exactly 1 duplicate skipped at ingest (the overlapping June 25 FIT4LESS row from the wider chequing export)",
+        "metrics.json recurring contains NETFLIX with price_creep = 1.50",
+        "budget_vs_actual is rendered (targets existed); no new budget proposal",
+        "both identical July 4 TIM HORTONS -6.45 charges are present in ledger.csv (occurrence dedupe kept the twins)",
+        "dashboard shows month-over-month deltas (July not treated as baseline)",
+        "the only merchant question the user would have been asked is BEST BUY (memory answered everything else)"
+      ]
     },
     {
       "id": 3,
-      "prompt": "monthly money time — but i couldn't get the rogers screenshot this month, just the rbc csvs in .tmp/monthly-money/2026-07/",
+      "prompt": "monthly money time \u2014 but i couldn't get the rogers screenshot this month, just the rbc csvs in .tmp/monthly-money/2026-07/",
       "expected_output": "Runs the full review on RBC data only, prominently notes 'Rogers card not included' on the dashboard and in the reply, does not invent Rogers data.",
-      "files": [".tmp/monthly-money/2026-07/rbc_chequing.csv", ".tmp/monthly-money/2026-07/rbc_visa.csv"]
+      "files": [
+        ".tmp/monthly-money/2026-07/rbc_chequing.csv",
+        ".tmp/monthly-money/2026-07/rbc_visa.csv"
+      ],
+      "assertions": [
+        "metrics.json cash_flow.income equals 4900.00 and total spend equals 2239.53 (RBC only)",
+        "dashboard.html contains a prominent 'Rogers card not included' (or equivalent) notice",
+        "ledger.csv has zero source=rogers_screenshot rows in 2026-07 (no invented Rogers data)",
+        "budget_vs_actual is rendered against the June-approved targets"
+      ]
     }
   ]
 }
