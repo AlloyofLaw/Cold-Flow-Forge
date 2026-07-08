@@ -1,0 +1,23 @@
+{
+  "skill_name": "monthly-money",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "hey, got my june exports done. chequing and visa csvs are in .tmp/monthly-money/2026-06/ — run my monthly money review",
+      "expected_output": "Runs parse_rbc.py and money_ledger.py (ingest/commit/metrics), asks the user to categorize unknown merchants in batched questions, updates memory.json, appends to ledger.csv, renders the dashboard HTML per dashboard-spec, archives to finances/reports/2026-06.html. Baseline month: proposes budgets. Totals must reconcile with the CSVs and transfers/CC payments must be excluded.",
+      "files": [".tmp/monthly-money/2026-06/rbc_chequing.csv", ".tmp/monthly-money/2026-06/rbc_visa.csv"]
+    },
+    {
+      "id": 2,
+      "prompt": "where did my money go in july? files are in .tmp/monthly-money/2026-07/ (same two accounts). also heads up i think netflix raised their price again",
+      "expected_output": "Second-month run: fewer categorization questions (memory hits), month-over-month deltas populated, recurring section detects the Netflix price creep planted in fixtures, budget vs actual rendered against approved targets, freed-for-business trend has two points.",
+      "files": [".tmp/monthly-money/2026-07/rbc_chequing.csv", ".tmp/monthly-money/2026-07/rbc_visa.csv"]
+    },
+    {
+      "id": 3,
+      "prompt": "monthly money time — but i couldn't get the rogers screenshot this month, just the rbc csvs in .tmp/monthly-money/2026-07/",
+      "expected_output": "Runs the full review on RBC data only, prominently notes 'Rogers card not included' on the dashboard and in the reply, does not invent Rogers data.",
+      "files": [".tmp/monthly-money/2026-07/rbc_chequing.csv", ".tmp/monthly-money/2026-07/rbc_visa.csv"]
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "targets": {},
+  "notes": "Empty until the baseline month is reviewed — metrics emits a budget_proposal, the user approves/adjusts it, and the approved numbers land in targets as {\"Category\": monthly_target_number}."
+}

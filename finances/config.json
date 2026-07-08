@@ -1,0 +1,41 @@
+{
+  "currency": "CAD",
+  "big_ticket_threshold": 200,
+  "categories": {
+    "Income": {"type": "income"},
+    "Housing": {"type": "essential"},
+    "Utilities/Phone": {"type": "essential"},
+    "Groceries": {"type": "essential"},
+    "Transport": {"type": "essential"},
+    "Health": {"type": "essential"},
+    "Debt Payments": {"type": "essential"},
+    "Dining & Takeout": {"type": "discretionary"},
+    "Subscriptions": {"type": "discretionary"},
+    "Shopping": {"type": "discretionary"},
+    "Entertainment": {"type": "discretionary"},
+    "Family/Gifts": {"type": "discretionary"},
+    "Business": {"type": "business"},
+    "Uncategorized": {"type": "discretionary"}
+  },
+  "payroll_patterns": [
+    "PAY EMPLOYER",
+    "PAYROLL",
+    "DIRECT DEPOSIT PAY"
+  ],
+  "exclude_patterns": [
+    "PAYMENT - THANK YOU",
+    "PYT - THANK YOU",
+    "PAYMENT RBC CREDIT CARD",
+    "WWW PAYMENT - CREDIT CARD",
+    "CREDIT CARD/LOC PAY",
+    "WWW TRANSFER",
+    "TRANSFER TO",
+    "TRANSFER FROM",
+    "TFR-TO",
+    "TFR-FR"
+  ],
+  "notes": {
+    "payroll_patterns": "Replace 'PAY EMPLOYER' with the exact payroll descriptor from the first real RBC export — check the deposit line and copy its wording.",
+    "exclude_patterns": "Substrings (case-insensitive) that mark inter-account transfers and credit-card payments so money moving between your own accounts never counts as spending."
+  }
+}
