@@ -45,11 +45,13 @@ LEDGER_COLUMNS = [
     "merchant", "recipient", "category", "business", "amount", "currency",
 ]
 
-ETRANSFER_MARKERS = ("E-TRF", "E-TRANSFER", "ETRANSFER", "INTERAC")
+# NOT bare "INTERAC": debit-card rows read "Contactless Interac purchase" —
+# those are merchant purchases, not e-transfers
+ETRANSFER_MARKERS = ("E-TRF", "E-TRANSFER", "ETRANSFER", "INTERAC E-TR", "SEND E-TFR")
 ETRANSFER_PREFIXES = (
     "INTERAC E-TRF- ", "INTERAC E-TRF ", "E-TRANSFER SENT ", "E-TRANSFER RECEIVED ",
     "E-TRANSFER - AUTODEPOSIT ", "E-TRANSFER TO ", "E-TRANSFER FROM ",
-    "E-TRANSFER ", "INTERAC E-TRANSFER ", "SEND E-TFR ",
+    "E-TRANSFER REQUEST FULFILLED ", "E-TRANSFER ", "INTERAC E-TRANSFER ", "SEND E-TFR ",
 )
 
 
@@ -63,8 +65,13 @@ def norm(text):
 
 def merchant_key(description):
     """Merchant identity for memory lookups: normalized description with
-    trailing store/reference numbers dropped (TIM HORTONS #4821 -> TIM HORTONS)."""
-    words = norm(description).split()
+    trailing store/reference numbers dropped (TIM HORTONS #4821 -> TIM HORTONS).
+    Foreign-currency suffixes ("... FOREIGN CURRENCY USD 44 84 EXCHANGE RATE...")
+    are per-transaction noise, not merchant identity."""
+    d = norm(description)
+    if " FOREIGN CURRENCY" in d:
+        d = d.split(" FOREIGN CURRENCY")[0]
+    words = d.split()
     while words and (words[-1].isdigit() or re.fullmatch(r"[A-Z]{0,2}\d{2,}", words[-1])):
         words.pop()
     return " ".join(words)
@@ -85,6 +92,16 @@ def etransfer_recipient(description):
     # fall back: drop leading e-transfer-ish tokens
     words = [w for w in d.split() if w not in ("INTERAC", "E", "TRF", "E-TRF", "ETRANSFER", "SENT", "RCVD", "RECEIVED", "AUTODEPOSIT")]
     return " ".join(words).strip()
+
+
+def strip_etransfer_ref(recipient):
+    """RBC appends a 6-char confirmation code to e-transfer descriptions
+    ('ATHENA LAU RCS4KJ') — drop it so the same person is one memory key."""
+    words = recipient.split()
+    if words and len(words[-1]) == 6 and words[-1].isalnum() \
+            and any(c.isdigit() for c in words[-1]) and any(c.isalpha() for c in words[-1]):
+        words.pop()
+    return " ".join(words)
 
 
 def load_json(path, default):
@@ -150,7 +167,7 @@ def categorize(txn, store):
     # e-transfers are checked before exclude patterns: "e-Transfer to X" must hit
     # recipient memory, not get swallowed by the generic TRANSFER TO exclusion
     if is_etransfer(txn["description"]):
-        txn["recipient"] = etransfer_recipient(txn["description"])
+        txn["recipient"] = strip_etransfer_ref(etransfer_recipient(txn["description"]))
         entry = lookup(store.memory.get("recipients", {}), txn["recipient"])
         if entry:
             txn["category"] = entry.get("category")
