@@ -1,4 +1,776 @@
 {
-  "merchants": {},
-  "recipients": {}
+  "merchants": {
+    "88 SUPERMARKET KILLARN VANCOUVER BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "A & W 0580 NEW WEST NEW WESTMINSTBC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "ACCOUNT PAYABLE PMT CACTUS AP": {
+      "category": "Income",
+      "business": false
+    },
+    "AMAZON CA BS34E4BM1 VANCOUVER BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "AMAZON CA EP46Y4043 TORONTO ON": {
+      "category": "Shopping",
+      "business": false
+    },
+    "APPLE COM BILL TORONTO ON": {
+      "category": "Subscriptions",
+      "business": false
+    },
+    "APPLE STORE R421 RICHMOND BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "APPLE STORE R460 BURNABY BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "BEST BUY 973 BURNABY BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "BESTBUY 99 VANCOUVER BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "BIG BANG SUSHI VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "BIG WAY HOT POT ACKROY RICHMOND BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "BIG WAY HOT POT GILMOR BURNABY BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "BIG WAY HOT POT KINGSW BURNABY BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "CACTUS CLUB BENTALL VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "CANADA ESSENTIALS BENEFIT CANADA": {
+      "category": "Income",
+      "business": false
+    },
+    "CANADA WORKERS BENEFIT CANADA": {
+      "category": "Income",
+      "business": false
+    },
+    "CAPILANO SUS BR GATE NORTH VANCOUVBC": {
+      "category": "Entertainment",
+      "business": false
+    },
+    "CASE MOGUL BURNABY BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "CASH BACK REWARD": {
+      "category": "Income",
+      "business": false
+    },
+    "CHARADES COLLECTIVE BALWYN VIC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "CHATIME CHA53 VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "CHV43068 VICTORIA DRIV VANCOUVER BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "CHV43079 2 & WESTMINST RICHMOND BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "CHV43081 GARDEN CITY C RICHMOND BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "CITY OF VAN PAYBYPHONE VANCOUVER BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "COLUMBUS MEAT MARKET L VANCOUVER BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "COMPASS ACCOUNT BURNAB BURNABY BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "CONTACTLESS INTERAC PURCHASE 0307 YANG'S DUMPLING": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "COSTCO WHOLESALE W54 RICHMOND BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "COSTCO WHOLESALE W548 BURNABY BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "COSTCO WHOLESALE W552 VANCOUVER BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "DAISO METROTOWN BURNABY BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "DISCOVERY HUT CHINOOK CALGARY AB": {
+      "category": "Entertainment",
+      "business": false
+    },
+    "DOLLAR DAZE BURNABY BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "DR G S RAI OPTOMETR BURNABY BC": {
+      "category": "Health",
+      "business": false
+    },
+    "EASYPARK HO VANCOUVER BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "EB GAMES 852 BURNABY BC": {
+      "category": "Entertainment",
+      "business": false
+    },
+    "FAMOUS PLAYER 1408QPS BURNABY BC": {
+      "category": "Entertainment",
+      "business": false
+    },
+    "FEDEX90995812 T1800 4633339ON": {
+      "category": "Shopping",
+      "business": false
+    },
+    "GOGI KOREAN BBQ SUNRID CALGARY AB": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "GST CANADA": {
+      "category": "Income",
+      "business": false
+    },
+    "HANGTAG PARKING VANCOUVER BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "HELLO NORI RICHMOND RICHMOND BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "HOLT RENFREW VANCOUVER VANCOUVER BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "HORIN RAMEN METROTOWN BURNABY BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "ICY BAR KNIGHT VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "IMPARK00011928U VANCOUVER BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "IMPARK00661603U RICHMOND BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "IN OUT PARCEL POINT ROBERTSWA": {
+      "category": "Shopping",
+      "business": false
+    },
+    "KEUMSAN RESTAURANT VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "KIMU JAPANESE CUISINE VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "KING TAPS LONSDALE NORTH VANCOUVBC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "KOYA JAPAN 2109 BURNABY BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "LIV RENT VANCOUVER BC": {
+      "category": "Housing",
+      "business": false
+    },
+    "LM NEW WESTMINSTER NEW WEST BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "LONDON DRUGS 11 RICHMOND BC": {
+      "category": "Health",
+      "business": false
+    },
+    "LONDON DRUGS 31 CALGARY AB": {
+      "category": "Health",
+      "business": false
+    },
+    "LONDON DRUGS 47 MAPLE RIDGE BC": {
+      "category": "Health",
+      "business": false
+    },
+    "LONDON DRUGS 53 VANCOUVER BC": {
+      "category": "Health",
+      "business": false
+    },
+    "LONDON DRUGS 71 BURNABY BC": {
+      "category": "Health",
+      "business": false
+    },
+    "LONDON DRUGS 88 VANCOUVER BC": {
+      "category": "Health",
+      "business": false
+    },
+    "METROTOWN EYEWEAR BURNABY BC": {
+      "category": "Health",
+      "business": false
+    },
+    "MICROSOFT PC GAME PASS MISSISSAUGA ON": {
+      "category": "Subscriptions",
+      "business": false
+    },
+    "MINORU CTR ACTIVE LIVI RICHMOND BC": {
+      "category": "Health",
+      "business": false
+    },
+    "MISC PAYMENT GOODLIFE CLUBS": {
+      "category": "Health",
+      "business": false
+    },
+    "MONTHLY FEE": {
+      "category": "Bank Fees",
+      "business": false
+    },
+    "MT SEYMOUR RESORTS NORTH VANCOUVBC": {
+      "category": "Entertainment",
+      "business": false
+    },
+    "NANDO'S RICHMOND NORTH RICHMOND BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "NEW FUJI VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "OBSIDIAN OAKVILLE ON": {
+      "category": "Subscriptions",
+      "business": false
+    },
+    "OEB YALETOWN VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "ORETACHI CURRY MAIN ST VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "PARKING SHOPS AT NEW W NEW WESTMINSTBC": {
+      "category": "Transport",
+      "business": false
+    },
+    "PAYBYPHONE BURNABY VANCOUVER BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "PETRO CANADA 91324 COQUITLAM BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "PETRO CANADA 92523 VANCOUVER BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "PHNOM PENH RESTAURANT VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "PNE FOOD & BEVERAGE VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "POPEYE'S SUPPLEMENTS B BURNABY BC": {
+      "category": "Health",
+      "business": false
+    },
+    "POPEYES 13590 RICHMOND BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "PRICESMART FOODS 2281 BURNABY BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "R F HAUSER SHOWS CHILLIWACK BC": {
+      "category": "Entertainment",
+      "business": false
+    },
+    "RCH DHL CUSTOMS CALGARY AB": {
+      "category": "Shopping",
+      "business": false
+    },
+    "REAL CDN SUPERSTORE 1 BURNABY BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "REAL CDN SUPERSTORE 1 RICHMOND BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "REAL CDN SUPERSTORE 1 VANCOUVER BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "REAL CDN SUPERSTORE 1 WESTBANK BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "RICHMOND SPORTS AND FI RICHMOND BC": {
+      "category": "Health",
+      "business": false
+    },
+    "SAVAGE CREEK GOLF COUR RICHMOND BC": {
+      "category": "Entertainment",
+      "business": false
+    },
+    "SG THEBESTPDF COM DOVER NV": {
+      "category": "Subscriptions",
+      "business": false
+    },
+    "SHELL C01014 BURNABY BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "SHELL C01024 VANCOUVER BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "SHELL C01107 VANCOUVER BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "SHOP MAKERS VANCOUVER BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "SHOPPERS DRUG MART 227 VANCOUVER BC": {
+      "category": "Health",
+      "business": false
+    },
+    "SKINNY DUKES KELOWNA BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "SP HARRISON GREY VILA NOVA DE PT": {
+      "category": "Shopping",
+      "business": false
+    },
+    "SP HEART AND SOIL HOUSTON TX": {
+      "category": "Shopping",
+      "business": false
+    },
+    "SP KIDORIMAN JACKSON WY": {
+      "category": "Shopping",
+      "business": false
+    },
+    "SP SUPERIOR MANE WILMINGTON DE": {
+      "category": "Shopping",
+      "business": false
+    },
+    "SP TSM 01 LONDON LND": {
+      "category": "Shopping",
+      "business": false
+    },
+    "SP ZEPHYR EPIC SURREY BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "SPOTIFY P3E20D44E6 STOCKHOLM SWE": {
+      "category": "Subscriptions",
+      "business": false
+    },
+    "SPOTIFY P3F128D48A STOCKHOLM SWE": {
+      "category": "Subscriptions",
+      "business": false
+    },
+    "SPOTIFY P400EFD4B8 STOCKHOLM SWE": {
+      "category": "Subscriptions",
+      "business": false
+    },
+    "SPOTIFY P4125EBA2B STOCKHOLM SWE": {
+      "category": "Subscriptions",
+      "business": false
+    },
+    "SPOTIFY P4224C3234 STOCKHOLM SWE": {
+      "category": "Subscriptions",
+      "business": false
+    },
+    "SPOTIFY P4335229D5 STOCKHOLM SWE": {
+      "category": "Subscriptions",
+      "business": false
+    },
+    "SQ COCO FRESH TEA & J CALGARY AB": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "SQ COCO FRESH TEA & J VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "SQ DL CHICKEN EAST VA VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "SQ EARNEST ICE CREAM VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "SQ LUIGI & SONS BUTCH VANCOUVER BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "STAPLES 68 COQUITLAM BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "STARBUCKS 16715 COQUITLAM BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "STEAMGAMES COM 4259522 BELLEVUE WA": {
+      "category": "Entertainment",
+      "business": false
+    },
+    "SUBWAY 54752 VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "T&T SUPERMARKET 001 BURNABY BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "TAX REFUND CANADA": {
+      "category": "Income",
+      "business": false
+    },
+    "TG STATION SQUARE BURNABY BC": {
+      "category": "Health",
+      "business": false
+    },
+    "THE CONNECTION GAMES & VANCOUVER BC": {
+      "category": "Entertainment",
+      "business": false
+    },
+    "THE HOME DEPOT 7045 COQUITLAM BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "TIM HORTONS 2403 COQUITLAM BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "TIMOTHY S FROZEN YOGUR RICHMOND BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "TOMMY GUNS STATION SQ BURNABY BC": {
+      "category": "Health",
+      "business": false
+    },
+    "TRIPLE O'S 209 COQUITLAM BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "TST DIN TAI FUNG VAN VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "TST DOVETAIL VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "TST GOOD9 KOREAN BBQ RICHMOND BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "TST JAY NOK MODERN THA VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "TST LEOPOLDS TAVERN V VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "UBER CANADA UBEREATS TORONTO ON": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "UBER CANADA UBERTRIP TORONTO ON": {
+      "category": "Transport",
+      "business": false
+    },
+    "UNIQLO CANADA POS CA M BURNABY BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "UNIVERSITY OF BRITISH VANCOUVER BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "VAN AQUA UPSTREAM CAFE VANCOUVER BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "VANCITY CJ TRADING CAR RICHMOND BC": {
+      "category": "Entertainment",
+      "business": false
+    },
+    "VAPE STREET BURNABY BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "VAPEZILLA SMOKE SHOP S VANCOUVER BC": {
+      "category": "Shopping",
+      "business": false
+    },
+    "WAL MART 1206 MAPLE RIDGE BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "WAL MART 1208 COQUITLAM BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "WAL MART 3008 BURNABY BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "WALMART CA MISSISSAUGA ON": {
+      "category": "Groceries",
+      "business": false
+    },
+    "WENDY'S RESTAURANT 65 COQUITLAM BC": {
+      "category": "Dining & Takeout",
+      "business": false
+    },
+    "WHOLE FOODS MARKET VANCOUVER BC": {
+      "category": "Groceries",
+      "business": false
+    },
+    "WHOP POKENOTIFY NEW YORK BC": {
+      "category": "Subscriptions",
+      "business": false
+    },
+    "WHOP POKENOTIFY VANCOUVER BC": {
+      "category": "Subscriptions",
+      "business": false
+    },
+    "WISERS WIDE WORLD OF C LANGLEY BC": {
+      "category": "Entertainment",
+      "business": false
+    },
+    "ZIPBY CANADA LIMITED VANCOUVER BC": {
+      "category": "Transport",
+      "business": false
+    },
+    "ZIPBY MISSISSAUGA ON": {
+      "category": "Transport",
+      "business": false
+    },
+    "ONLINE BANKING PAYMENT 0367 VISA TD BANK": {
+      "category": "Debt Payments",
+      "business": false
+    },
+    "ONLINE BANKING PAYMENT 0502 ROGERS BANK": {
+      "category": "Rogers Card",
+      "business": false
+    },
+    "ONLINE BANKING PAYMENT 2795 ROGERS BANK": {
+      "category": "Rogers Card",
+      "business": false
+    },
+    "ONLINE BANKING PAYMENT 3309 ROGERS BANK": {
+      "category": "Rogers Card",
+      "business": false
+    },
+    "ONLINE BANKING PAYMENT 3434 VISA TD BANK": {
+      "category": "Debt Payments",
+      "business": false
+    },
+    "ONLINE BANKING PAYMENT 3965 VISA TD BANK": {
+      "category": "Debt Payments",
+      "business": false
+    },
+    "ONLINE BANKING PAYMENT 4056 VISA TD BANK": {
+      "category": "Debt Payments",
+      "business": false
+    },
+    "ONLINE BANKING PAYMENT 4623 VISA TD BANK": {
+      "category": "Debt Payments",
+      "business": false
+    },
+    "ONLINE BANKING PAYMENT 5559 VISA TD BANK": {
+      "category": "Debt Payments",
+      "business": false
+    },
+    "ONLINE BANKING PAYMENT 5973 ROGERS BANK": {
+      "category": "Rogers Card",
+      "business": false
+    },
+    "ONLINE BANKING PAYMENT 7228 ROGERS BANK": {
+      "category": "Rogers Card",
+      "business": false
+    },
+    "ONLINE BANKING PAYMENT 7816 VISA TD BANK": {
+      "category": "Debt Payments",
+      "business": false
+    },
+    "ONLINE BANKING PAYMENT 8745 VISA TD BANK": {
+      "category": "Debt Payments",
+      "business": false
+    },
+    "SCHEDULED PAYMENT ONLINE TRANSFER": {
+      "category": "EXCLUDE",
+      "business": false
+    },
+    "DEPOSIT ONLINE TRANSFER": {
+      "category": "EXCLUDE",
+      "business": false
+    },
+    "ATM DEPOSIT": {
+      "category": "Gambling",
+      "business": false
+    },
+    "MISC PAYMENT BC LOTTERY CORP": {
+      "category": "Gambling",
+      "business": false
+    },
+    "PLAYNOW COM 8777066789 8777066789 BC": {
+      "category": "Gambling",
+      "business": false
+    },
+    "GACHA GAMES LODZ": {
+      "category": "Mobile Games",
+      "business": false
+    },
+    "FGT BEYOND PNW 8885127469 TX": {
+      "category": "Entertainment",
+      "business": false
+    },
+    "DYSFUNCTIONAL PASS LLC DAVENPORT FL": {
+      "category": "Entertainment",
+      "business": false
+    },
+    "SQ TULIPS OF THE VALL AGASSIZ BC": {
+      "category": "Family/Gifts",
+      "business": false
+    },
+    "ANTHROPIC CLAUDE SUB SAN FRANCISCOCA": {
+      "category": "Business",
+      "business": true
+    },
+    "ANTHROPIC SAN FRANCISCOCA": {
+      "category": "Business",
+      "business": true
+    },
+    "CALENDLY BUFORD GA": {
+      "category": "Business",
+      "business": true
+    },
+    "CARRD FRANKLIN TN": {
+      "category": "Business",
+      "business": true
+    },
+    "GODADDY 4096365652 VICTORIA BC": {
+      "category": "Business",
+      "business": true
+    },
+    "SMARTLEAD 521 PRODUCTS SYDNEY NSW": {
+      "category": "Business",
+      "business": true
+    },
+    "SPT INBOX LAB COACHING VANCOUVER GA": {
+      "category": "Business",
+      "business": true
+    },
+    "WHOP INBOXLAB NEW YORK BC": {
+      "category": "Business",
+      "business": true
+    }
+  },
+  "recipients": {
+    "GIGADAT INC": {
+      "category": "Gambling"
+    },
+    "PAYDIRECT BILLING SOLUTIONS INC": {
+      "category": "Gambling"
+    },
+    "ATHENA LAU": {
+      "category": "Family/Gifts"
+    },
+    "MIKEL FELIX": {
+      "category": "Family/Gifts"
+    },
+    "VINCENT NGUYEN": {
+      "category": "Family/Gifts"
+    },
+    "JESS KWON": {
+      "category": "Family/Gifts"
+    },
+    "JESSICA KWON": {
+      "category": "Family/Gifts"
+    },
+    "YANNI FELIX": {
+      "category": "Family/Gifts"
+    },
+    "RANDY LU": {
+      "category": "Family/Gifts"
+    },
+    "MONICA": {
+      "category": "Family/Gifts"
+    },
+    "ANNA NGO": {
+      "category": "Family/Gifts"
+    },
+    "DOM": {
+      "category": "Family/Gifts"
+    },
+    "ANTHONY LE": {
+      "category": "Family/Gifts"
+    },
+    "ANNALEESE": {
+      "category": "Family/Gifts"
+    }
+  },
+  "evergreen_artifact": {
+    "title": "Monthly Money",
+    "url": "https://claude.ai/code/artifact/884fc8f1-88e8-471f-b2d2-e6add5943dc1"
+  }
 }

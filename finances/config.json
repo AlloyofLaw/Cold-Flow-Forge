@@ -2,25 +2,63 @@
   "currency": "CAD",
   "big_ticket_threshold": 200,
   "categories": {
-    "Income": {"type": "income"},
-    "Housing": {"type": "essential"},
-    "Utilities/Phone": {"type": "essential"},
-    "Groceries": {"type": "essential"},
-    "Transport": {"type": "essential"},
-    "Health": {"type": "essential"},
-    "Debt Payments": {"type": "essential"},
-    "Dining & Takeout": {"type": "discretionary"},
-    "Subscriptions": {"type": "discretionary"},
-    "Shopping": {"type": "discretionary"},
-    "Entertainment": {"type": "discretionary"},
-    "Family/Gifts": {"type": "discretionary"},
-    "Business": {"type": "business"},
-    "Uncategorized": {"type": "discretionary"}
+    "Income": {
+      "type": "income"
+    },
+    "Housing": {
+      "type": "essential"
+    },
+    "Utilities/Phone": {
+      "type": "essential"
+    },
+    "Groceries": {
+      "type": "essential"
+    },
+    "Transport": {
+      "type": "essential"
+    },
+    "Health": {
+      "type": "essential"
+    },
+    "Debt Payments": {
+      "type": "essential"
+    },
+    "Dining & Takeout": {
+      "type": "discretionary"
+    },
+    "Subscriptions": {
+      "type": "discretionary"
+    },
+    "Shopping": {
+      "type": "discretionary"
+    },
+    "Entertainment": {
+      "type": "discretionary"
+    },
+    "Family/Gifts": {
+      "type": "discretionary"
+    },
+    "Business": {
+      "type": "business"
+    },
+    "Bank Fees": {
+      "type": "essential"
+    },
+    "Uncategorized": {
+      "type": "discretionary"
+    },
+    "Rogers Card": {
+      "type": "discretionary"
+    },
+    "Gambling": {
+      "type": "discretionary"
+    },
+    "Mobile Games": {
+      "type": "discretionary"
+    }
   },
   "payroll_patterns": [
-    "PAY EMPLOYER",
-    "PAYROLL",
-    "DIRECT DEPOSIT PAY"
+    "PAYROLL DEPOSIT"
   ],
   "exclude_patterns": [
     "PAYMENT - THANK YOU",
@@ -32,10 +70,12 @@
     "TRANSFER TO",
     "TRANSFER FROM",
     "TFR-TO",
-    "TFR-FR"
+    "TFR-FR",
+    "ONLINE BANKING TRANSFER"
   ],
   "notes": {
-    "payroll_patterns": "Replace 'PAY EMPLOYER' with the exact payroll descriptor from the first real RBC export — check the deposit line and copy its wording.",
+    "payroll_patterns": "'Payroll Deposit <EMPLOYER>' is RBC's real descriptor (verified against 2026 statements).",
+    "exclude_online_banking_transfer": "'Online Banking transfer - NNNN' in chequing is the payment to the RBC Mastercard (amounts match MC statement balances); the MC side is 'PAYMENT - THANK YOU'. Both excluded. 'Online Banking payment' (to external cards) is NOT excluded.",
     "exclude_patterns": "Substrings (case-insensitive) that mark inter-account transfers and credit-card payments so money moving between your own accounts never counts as spending."
   }
 }

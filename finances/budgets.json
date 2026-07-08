@@ -1,4 +1,19 @@
 {
-  "targets": {},
-  "notes": "Empty until the baseline month is reviewed — metrics emits a budget_proposal, the user approves/adjusts it, and the approved numbers land in targets as {\"Category\": monthly_target_number}."
+  "targets": {
+    "Groceries": 655,
+    "Dining & Takeout": 465,
+    "Shopping": 465,
+    "Family/Gifts": 415,
+    "Entertainment": 315,
+    "Transport": 305,
+    "Rogers Card": 245,
+    "Mobile Games": 240,
+    "Health": 240,
+    "Debt Payments": 90,
+    "Subscriptions": 55,
+    "Bank Fees": 5,
+    "Gambling": 0
+  },
+  "business_target_monthly": 1000,
+  "notes": "Approved 2026-07-08 from Jan-May 2026 averages (discretionary -15%). Gambling target 0 by Andrew's call. business_target_monthly = business investment goal."
 }
