@@ -58,14 +58,43 @@ base knobs: `BASE_REAR_EXT` (heel depth behind the shell), `BASE_HEEL_H`
   Measure the actual board with calipers and update these five — that's the
   biggest remaining fit risk.
 
+## Dragon cover (decorative top clamp)
+
+`dragon_cover.py` generates a **simple stylised dragon** that lies along the
+top edge of the assembled case and clamps the front bezel to the rear shell:
+an inverted-U channel caps the top edge, front talons hook down over the
+bezel, a horned head rears up at one end and a tail curls up at the other,
+with spine ridges down the back.
+
+![dragon on case](dragon_on_case.png)
+
+- Sized entirely from `case_design.py` (it imports it), so it always matches
+  the case. Fit clearance `CLEAR = 0.4 mm` per side (tune for your printer).
+- A final safety cut subtracts the case volume, so the cover is guaranteed
+  never to interfere — verified at **0.0 cm³** overlap. It slides straight
+  down onto the top edge.
+- Print laid on its back (channel opening upward); the horns and the tail
+  tip will want a little support. ~36 cm³ of material.
+
+```bash
+python3 dragon_cover.py       # -> dragon_cover.step / .stl
+```
+
+Handy style knobs at the top of `dragon_cover.py`: `TAIL_LEN` / `TAIL_RISE`
+(tail curl), `HORN_LEN`, `N_SPINES` / `SPINE_H` (back ridges), `N_CLAWS`,
+`LIP_DROP` (how far it grips down the faces).
+
 ## Parts
 
 | File | What it is |
 |---|---|
-| `case_design.py` | Single source file — generates both parts + stability check |
+| `case_design.py` | Generates the bezel + tilted rear shell + stability check |
+| `dragon_cover.py` | Generates the dragon top clamp (imports `case_design`) |
 | `front_bezel.step` / `.stl` | Screen bezel with rabbet lip |
 | `rear_shell.step` / `.stl` | Back shell: cavity, standoffs, ports, vent, tilt base |
+| `dragon_cover.step` / `.stl` | Dragon top clamp cover |
 | `case_preview.png` | Side profile + bezel render |
+| `dragon_on_case.png` | Dragon cover shown clamped on the case |
 
 STEP is for Onshape import / further parametric editing; STL is print-ready.
 
