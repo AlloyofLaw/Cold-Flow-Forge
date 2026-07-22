@@ -211,10 +211,11 @@
   box-shadow:0 8px 24px -8px rgba(242,106,33,.55);
   transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
   text-align:center;
+  margin-inline:auto;
 }
 #cff .cta:hover{transform:translateY(-2px);box-shadow:0 14px 30px -8px rgba(242,106,33,.6);filter:saturate(1.06)}
 #cff .cta:focus-visible{outline:3px solid var(--forge);outline-offset:3px}
-#cff .cta-wrap{margin-top:38px}
+#cff .cta-wrap{margin-top:38px;text-align:center}
 #cff .cta-sub{
   font-family:var(--mono);font-size:12px;letter-spacing:.06em;
   color:var(--faint);margin-top:14px;
@@ -277,8 +278,7 @@
 /* hero content is centered (this section only) — every other section stays left-aligned */
 #cff .hero .col{text-align:center}
 #cff .hero .vsl{margin-inline:auto}
-#cff .hero .cta-wrap{text-align:center}
-#cff .hero .cta{margin-inline:auto}
+/* CTA button + its hype line/sub-text are centered site-wide via base .cta-wrap */
 #cff .hero .badge-row{margin-bottom:34px}
 #cff .hero h1{margin:22px 0 0}
 /* one key word of the hero headline — its own VIVID orange→gold sweep, brighter
