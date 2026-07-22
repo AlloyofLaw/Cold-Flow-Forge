@@ -1,0 +1,10 @@
+# Netlify deploy config for Beat Drew (static PWA).
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA fallback so deep links resolve to the app shell.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
