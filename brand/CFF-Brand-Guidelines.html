@@ -1,0 +1,686 @@
+<title>Cold Flow Forge — Brand Guidelines</title>
+<style>
+  /* ============================================================
+     COLD FLOW FORGE — BRAND GUIDELINES
+     Colours eyedropped from the live coldflowforge.com screenshot.
+     Committed single-theme (dark): the forge lives in the dark.
+     ============================================================ */
+
+  :root{
+    /* --- Forge (the heat) --- */
+    --forge:        #F26A21;   /* primary signature */
+    --amber:        #F9A23C;   /* molten gradient partner */
+    --ember:        #EA4E1A;   /* hottest deep orange */
+
+    /* --- Cold (the flow) --- */
+    --flow:         #4FA6E0;   /* cold counterpart */
+    --ice:          #8FC9EE;   /* light blue tint */
+    --teal:         #1C7C6B;   /* supporting signal */
+
+    /* --- Ground (warm darks) --- */
+    --ink:          #0A0A0C;   /* deepest */
+    --char:         #17110D;   /* warm hero base */
+    --surface:      #15171D;   /* cards / panels */
+    --surface-2:    #1B1E26;   /* raised */
+    --hair:         rgba(255,255,255,.09);
+    --hair-strong:  rgba(255,255,255,.16);
+
+    /* --- Type tones --- */
+    --bone:         #ECE3D8;   /* headlines, warm white */
+    --muted:        #A79E95;   /* body */
+    --faint:        #6E6862;   /* captions / labels */
+
+    /* --- signature gradient --- */
+    --grad: linear-gradient(100deg, var(--ember) 0%, var(--forge) 45%, var(--amber) 100%);
+
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "IBM Plex Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+    --wrap: 1080px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+
+  body{
+    background:var(--ink);
+    color:var(--muted);
+    font-family:var(--sans);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  ::selection{background:var(--forge);color:#0a0a0c}
+
+  a{color:inherit;text-decoration:none}
+
+  /* ---- shared building blocks ---- */
+  .wrap{max-width:var(--wrap);margin:0 auto;padding:0 28px}
+
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12.5px;font-weight:600;
+    letter-spacing:.28em;text-transform:uppercase;
+    color:var(--forge);
+    display:inline-block;
+  }
+  .eyebrow.cold{color:var(--flow)}
+  .eyebrow.dim{color:var(--faint)}
+
+  h1,h2,h3{color:var(--bone);text-wrap:balance;letter-spacing:-.02em;line-height:1.04}
+  h1{font-size:clamp(44px,7.5vw,82px);font-weight:800}
+  h2{font-size:clamp(30px,4.5vw,46px);font-weight:800;letter-spacing:-.025em}
+  h3{font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+
+  section{padding:96px 0;border-top:1px solid var(--hair)}
+  .section-head{max-width:60ch;margin-bottom:52px}
+  .section-head p{margin-top:18px;font-size:18px;max-width:56ch}
+
+  .lead{font-size:clamp(18px,2.2vw,21px);color:var(--muted);max-width:60ch}
+  strong{color:var(--bone);font-weight:700}
+
+  /* ================= NAV ================= */
+  header.nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(10,10,12,.82);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--hair);
+  }
+  .nav-inner{
+    max-width:var(--wrap);margin:0 auto;padding:14px 28px;
+    display:flex;align-items:center;justify-content:space-between;gap:18px;
+  }
+  .nav-links{display:flex;gap:26px;font-family:var(--mono);font-size:12px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--faint);flex-wrap:wrap}
+  .nav-links a{transition:color .18s}
+  .nav-links a:hover{color:var(--bone)}
+  @media(max-width:720px){ .nav-links{display:none} }
+
+  /* ---- the logo lockup (reusable) ---- */
+  .lockup{display:inline-flex;align-items:center;gap:14px}
+  .badge{
+    --s:44px;
+    width:var(--s);height:var(--s);
+    border-radius:9px;
+    background:linear-gradient(160deg,#211913,#0e0b09);
+    border:1px solid var(--hair-strong);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-weight:700;
+    font-size:calc(var(--s)*.34);letter-spacing:.06em;
+    color:var(--bone);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+    flex:none;
+  }
+  .badge .c{color:var(--forge)}
+  .wordmark{
+    font-family:var(--sans);font-weight:800;
+    letter-spacing:.02em;color:var(--bone);
+    font-size:16px;text-transform:uppercase;white-space:nowrap;
+  }
+  .nav .wordmark{font-size:14px}
+
+  /* ================= HERO ================= */
+  .hero{position:relative;overflow:hidden;border-top:none;
+    padding:118px 0 104px;}
+  .hero canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.85}
+  .hero::before{ /* ember glow */
+    content:"";position:absolute;z-index:0;
+    width:900px;height:900px;left:50%;top:-340px;transform:translateX(-50%);
+    background:radial-gradient(circle at center,
+      rgba(242,106,33,.26) 0%, rgba(234,78,26,.12) 32%, transparent 62%);
+    pointer-events:none;filter:blur(6px);
+  }
+  .hero .wrap{position:relative;z-index:2}
+  .hero .big-lockup{margin-bottom:40px}
+  .hero .big-lockup .badge{--s:64px;border-radius:13px}
+  .hero .big-lockup .wordmark{font-size:clamp(20px,3vw,28px)}
+  .hero h1{margin:22px 0 8px}
+  .hero h1 .cold{color:var(--flow)}
+  .hero h1 .hot{background:var(--grad);-webkit-background-clip:text;
+    background-clip:text;-webkit-text-fill-color:transparent}
+  .hero .lead{margin-top:26px}
+  .tagchip{
+    margin-top:34px;display:inline-flex;align-items:center;gap:10px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--muted);border:1px solid var(--hair);border-radius:999px;
+    padding:9px 16px;
+  }
+  .tagchip .dot{width:7px;height:7px;border-radius:50%;background:var(--forge);
+    box-shadow:0 0 12px 2px rgba(242,106,33,.7)}
+
+  /* ================= DUALITY ================= */
+  .duality{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:12px}
+  @media(max-width:720px){ .duality{grid-template-columns:1fr} }
+  .pole{
+    border:1px solid var(--hair);border-radius:16px;padding:34px 32px;
+    position:relative;overflow:hidden;background:var(--surface);
+  }
+  .pole::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px}
+  .pole.hot::after{background:var(--grad)}
+  .pole.cold::after{background:linear-gradient(90deg,var(--teal),var(--flow),var(--ice))}
+  .pole .k{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:16px;display:block}
+  .pole.hot .k{color:var(--forge)}
+  .pole.cold .k{color:var(--flow)}
+  .pole h3{font-size:30px;margin-bottom:12px}
+  .pole p{font-size:16px}
+
+  /* ================= COLOR ================= */
+  .swatch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media(max-width:820px){ .swatch-grid{grid-template-columns:repeat(2,1fr)} }
+  @media(max-width:520px){ .swatch-grid{grid-template-columns:1fr} }
+
+  .swatch{
+    border:1px solid var(--hair);border-radius:14px;overflow:hidden;
+    background:var(--surface);cursor:pointer;
+    transition:transform .16s ease, border-color .16s ease;
+    text-align:left;font:inherit;color:inherit;width:100%;
+  }
+  .swatch:hover{transform:translateY(-3px);border-color:var(--hair-strong)}
+  .swatch:focus-visible{outline:2px solid var(--forge);outline-offset:2px}
+  .swatch .chip{height:104px;position:relative}
+  .swatch .chip .copy{
+    position:absolute;right:10px;top:10px;
+    font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    background:rgba(0,0,0,.45);color:#fff;border-radius:6px;padding:4px 7px;
+    opacity:0;transition:opacity .16s;backdrop-filter:blur(3px);
+  }
+  .swatch:hover .copy{opacity:1}
+  .swatch .meta{padding:15px 17px 17px}
+  .swatch .name{color:var(--bone);font-weight:700;font-size:15px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .swatch .hex{font-family:var(--mono);font-size:12.5px;color:var(--muted);letter-spacing:.02em}
+  .swatch .role{font-size:12.5px;color:var(--faint);margin-top:7px;line-height:1.45}
+
+  .col-block{margin-bottom:46px}
+  .col-block > .eyebrow{margin-bottom:20px}
+
+  /* on-dark contrast note chips inside chip */
+  .chip .wl{position:absolute;left:10px;bottom:9px;font-family:var(--mono);font-size:10px;
+    letter-spacing:.08em;padding:2px 6px;border-radius:5px;color:#0a0a0c;background:rgba(255,255,255,.85)}
+  .chip .wd{position:absolute;left:10px;bottom:9px;font-family:var(--mono);font-size:10px;
+    letter-spacing:.08em;padding:2px 6px;border-radius:5px;color:#ECE3D8;background:rgba(0,0,0,.5)}
+
+  /* gradient banner */
+  .grad-banner{
+    border-radius:16px;overflow:hidden;border:1px solid var(--hair);
+    display:grid;grid-template-columns:1.4fr 1fr;min-height:190px;
+  }
+  @media(max-width:640px){ .grad-banner{grid-template-columns:1fr} }
+  .grad-banner .swatch-side{background:var(--grad);position:relative}
+  .grad-banner .swatch-side .lbl{
+    position:absolute;left:22px;bottom:20px;color:#1a0f06;font-family:var(--mono);
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+  .grad-banner .info{padding:26px 28px;background:var(--surface)}
+  .grad-banner .info code{font-family:var(--mono);font-size:12px;color:var(--amber);
+    display:block;margin-top:14px;line-height:1.7;word-break:break-word}
+
+  /* ================= LOGO SECTION ================= */
+  .logo-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:720px){ .logo-grid{grid-template-columns:1fr} }
+  .logo-card{
+    border:1px solid var(--hair);border-radius:16px;padding:40px 34px;
+    background:var(--surface);display:flex;flex-direction:column;gap:26px;
+    align-items:flex-start;justify-content:center;min-height:180px;
+  }
+  .logo-card.dark{background:var(--ink)}
+  .logo-card .cap{font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--faint)}
+  .clearspace{position:relative;padding:34px;border:1px dashed var(--hair-strong);border-radius:12px}
+  .clearspace .lockup{position:relative}
+
+  .misuse{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:26px}
+  @media(max-width:560px){ .misuse{grid-template-columns:1fr} }
+  .dont{border:1px solid var(--hair);border-radius:12px;padding:18px 20px;background:var(--surface);
+    display:flex;gap:13px;align-items:flex-start;font-size:14.5px}
+  .dont .x{color:var(--ember);font-family:var(--mono);font-weight:700;flex:none;margin-top:1px}
+
+  /* ================= TYPE ================= */
+  .type-row{border:1px solid var(--hair);border-radius:16px;background:var(--surface);
+    padding:30px 32px;margin-bottom:16px;display:grid;grid-template-columns:150px 1fr;gap:26px;align-items:baseline}
+  @media(max-width:640px){ .type-row{grid-template-columns:1fr;gap:14px} }
+  .type-row .role{font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--faint);line-height:1.6}
+  .type-row .role b{color:var(--muted);display:block;font-weight:600}
+  .spec-display{font-size:clamp(34px,5vw,54px);font-weight:800;letter-spacing:-.03em;color:var(--bone);line-height:1}
+  .spec-label{font-family:var(--mono);font-size:15px;letter-spacing:.24em;text-transform:uppercase;color:var(--forge)}
+  .spec-body{font-size:17px;color:var(--muted);max-width:52ch}
+  .scale{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  .scale span{font-family:var(--mono);font-size:11px;color:var(--faint);border:1px solid var(--hair);
+    border-radius:6px;padding:4px 8px}
+
+  /* ================= VOICE ================= */
+  .voice-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:720px){ .voice-grid{grid-template-columns:1fr} }
+  .vcard{border:1px solid var(--hair);border-radius:16px;background:var(--surface);padding:28px 30px}
+  .vcard h3{margin-bottom:16px}
+  .vlist{list-style:none;display:flex;flex-direction:column;gap:13px}
+  .vlist li{font-size:15px;padding-left:22px;position:relative;line-height:1.5}
+  .vlist li::before{content:"";position:absolute;left:0;top:9px;width:9px;height:9px;
+    transform:rotate(45deg);background:var(--flow)}
+  .vlist.warn li::before{background:var(--ember);border-radius:0}
+  .vlist.warn li{color:var(--muted)}
+  .vlist.warn li s{color:var(--faint)}
+  .mirror{border-left:3px solid transparent;border-image:var(--grad) 1;
+    padding:6px 0 6px 22px;margin-top:8px;color:var(--bone);font-size:19px;font-weight:600;line-height:1.4}
+
+  /* ================= MOTIF ================= */
+  .motif-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:720px){ .motif-grid{grid-template-columns:1fr} }
+  .motif{border:1px solid var(--hair);border-radius:14px;background:var(--surface);padding:26px;min-height:150px;
+    display:flex;flex-direction:column;gap:14px}
+  .motif .demo{flex:1;border-radius:9px;position:relative;overflow:hidden;min-height:74px;display:flex;align-items:center;justify-content:center}
+  .motif .cap{font-size:13.5px;color:var(--muted)}
+  .motif .cap b{color:var(--bone)}
+  .demo.glow{background:radial-gradient(circle at 50% 120%,rgba(242,106,33,.5),transparent 60%),var(--ink)}
+  .demo.warnbadge{background:var(--ink)}
+  .warn-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(242,106,33,.5);
+    color:var(--forge);font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+    border-radius:8px;padding:8px 14px;background:rgba(242,106,33,.06)}
+  .demo.labelmono{background:var(--ink);gap:6px;flex-direction:column}
+  .demo.labelmono span{font-family:var(--mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase}
+  .demo.labelmono .a{color:var(--forge)} .demo.labelmono .b{color:var(--flow)}
+
+  /* ================= FOOTER ================= */
+  footer{padding:64px 0 80px;border-top:1px solid var(--hair);color:var(--faint)}
+  footer .wrap{display:flex;flex-direction:column;gap:18px}
+  .note{font-size:13.5px;line-height:1.6;max-width:70ch;
+    border:1px solid var(--hair);border-radius:12px;padding:18px 20px;background:var(--surface)}
+  .note b{color:var(--muted)}
+
+  /* toast */
+  #toast{
+    position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+    background:var(--bone);color:#0a0a0c;font-family:var(--mono);font-size:12px;
+    letter-spacing:.06em;padding:11px 18px;border-radius:9px;font-weight:700;
+    opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;z-index:99;
+    box-shadow:0 10px 30px rgba(0,0,0,.5);
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="lockup" href="#top" aria-label="Cold Flow Forge">
+      <span class="badge"><span class="c">C</span>FF</span>
+      <span class="wordmark">Cold Flow Forge</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#logo">Logo</a>
+      <a href="#color">Colour</a>
+      <a href="#type">Type</a>
+      <a href="#voice">Voice</a>
+    </nav>
+  </div>
+</header>
+
+<a id="top"></a>
+<div class="hero">
+  <canvas id="embers" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div class="lockup big-lockup">
+      <span class="badge"><span class="c">C</span>FF</span>
+      <span class="wordmark">Cold Flow Forge</span>
+    </div>
+    <span class="eyebrow">Brand Guidelines · v1</span>
+    <h1>Run <span class="cold">cold</span>.<br>Come out <span class="hot">forged</span>.</h1>
+    <p class="lead">The complete visual and verbal identity for Cold Flow Forge — the colours, the logo, the type, and the voice that make controlled outbound look like nobody else's.</p>
+    <span class="tagchip"><span class="dot"></span>Controlled Outbound</span>
+  </div>
+</div>
+
+<!-- ================= THE IDEA ================= -->
+<section id="idea">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow dim">The idea</span>
+      <h2>Two temperatures, one system.</h2>
+      <p class="lead">The name is the brand. <strong>Cold</strong> is the discipline — deliverability-safe, methodical, data-led outbound. <strong>Forge</strong> is the outcome — raw prospects turned into qualified calls under heat and pressure. Every colour choice serves that duality: an icy blue for the process, a molten orange for the payoff, both on a deep, warm-dark ground.</p>
+    </div>
+    <div class="duality">
+      <div class="pole cold">
+        <span class="k">Cold · the method</span>
+        <h3>Flow Blue</h3>
+        <p>Proof, data, and calm control. Used for statistics, list-building, infrastructure — the parts that must feel precise and trustworthy.</p>
+      </div>
+      <div class="pole hot">
+        <span class="k">Forge · the outcome</span>
+        <h3>Ember Gradient</h3>
+        <p>Heat, urgency, and payoff. The single hero accent — headlines, calls to action, the warning that stops the scroll. Used sparingly, so it always lands.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LOGO ================= -->
+<section id="logo">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Logo</span>
+      <h2>The mark &amp; the wordmark.</h2>
+      <p class="lead">A monospace <strong>CFF</strong> monogram in a warm-dark badge, locked to the full <strong>COLD FLOW FORGE</strong> wordmark. The badge's "C" carries the forge orange — the one spot of heat in the mark.</p>
+    </div>
+
+    <div class="logo-grid">
+      <div class="logo-card dark">
+        <span class="cap">Primary lockup · on ink</span>
+        <div class="lockup" style="--s:56px">
+          <span class="badge" style="--s:56px;border-radius:12px"><span class="c">C</span>FF</span>
+          <span class="wordmark" style="font-size:22px">Cold Flow Forge</span>
+        </div>
+      </div>
+      <div class="logo-card">
+        <span class="cap">On surface · with tagline</span>
+        <div class="lockup" style="--s:56px">
+          <span class="badge" style="--s:56px;border-radius:12px"><span class="c">C</span>FF</span>
+          <div>
+            <div class="wordmark" style="font-size:22px">Cold Flow Forge</div>
+            <div style="font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--faint);text-transform:uppercase;margin-top:5px">Controlled Outbound</div>
+          </div>
+        </div>
+      </div>
+      <div class="logo-card">
+        <span class="cap">Monogram · standalone (favicon / avatar)</span>
+        <span class="badge" style="--s:76px;border-radius:16px"><span class="c">C</span>FF</span>
+      </div>
+      <div class="logo-card dark">
+        <span class="cap">Clear space · min. one badge-height all sides</span>
+        <div class="clearspace">
+          <div class="lockup" style="--s:48px">
+            <span class="badge" style="--s:48px;border-radius:11px"><span class="c">C</span>FF</span>
+            <span class="wordmark" style="font-size:19px">Cold Flow Forge</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="misuse">
+      <div class="dont"><span class="x">✕</span><span>Don't recolour the wordmark. It stays <strong style="color:var(--bone)">bone</strong> — never orange, never pure white.</span></div>
+      <div class="dont"><span class="x">✕</span><span>Don't apply the ember gradient to the whole badge. Heat lives in the "C" only.</span></div>
+      <div class="dont"><span class="x">✕</span><span>Don't place the mark on a light or busy background. It's built for the dark.</span></div>
+      <div class="dont"><span class="x">✕</span><span>Don't switch the monogram to a serif or condensed face — it's monospace.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COLOUR ================= -->
+<section id="color">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Colour</span>
+      <h2>The palette.</h2>
+      <p class="lead">Click any swatch to copy its hex. The <strong>forge</strong> family is the signature — use it as the single loud accent. The <strong>cold</strong> family carries data and proof. Everything else is ground and text.</p>
+    </div>
+
+    <!-- Forge -->
+    <div class="col-block">
+      <span class="eyebrow">Forge · the signature heat</span>
+      <div class="swatch-grid">
+        <button class="swatch" data-hex="#F26A21">
+          <div class="chip" style="background:#F26A21"><span class="copy">Click to copy</span><span class="wl">on light</span></div>
+          <div class="meta"><div class="name">Forge Orange <span class="hex">#F26A21</span></div><div class="role">Primary brand accent — CTAs, key headlines, the "C" in the badge.</div></div>
+        </button>
+        <button class="swatch" data-hex="#F9A23C">
+          <div class="chip" style="background:#F9A23C"><span class="copy">Click to copy</span><span class="wl">on light</span></div>
+          <div class="meta"><div class="name">Molten Amber <span class="hex">#F9A23C</span></div><div class="role">Gradient partner — the warm end of the ember blend. Highlights, hovers.</div></div>
+        </button>
+        <button class="swatch" data-hex="#EA4E1A">
+          <div class="chip" style="background:#EA4E1A"><span class="copy">Click to copy</span><span class="wd">on dark</span></div>
+          <div class="meta"><div class="name">Ember Red <span class="hex">#EA4E1A</span></div><div class="role">Hottest tone — the "WARNING" beat, warning pills, the gradient's deep start.</div></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Cold -->
+    <div class="col-block">
+      <span class="eyebrow cold">Cold · the flow</span>
+      <div class="swatch-grid">
+        <button class="swatch" data-hex="#4FA6E0">
+          <div class="chip" style="background:#4FA6E0"><span class="copy">Click to copy</span><span class="wd">on dark</span></div>
+          <div class="meta"><div class="name">Flow Blue <span class="hex">#4FA6E0</span></div><div class="role">Data &amp; proof accent — statistics, list bullets, trust cues.</div></div>
+        </button>
+        <button class="swatch" data-hex="#8FC9EE">
+          <div class="chip" style="background:#8FC9EE"><span class="copy">Click to copy</span><span class="wl">on light</span></div>
+          <div class="meta"><div class="name">Ice <span class="hex">#8FC9EE</span></div><div class="role">Lighter blue tint — secondary data, subtle links, chart fills.</div></div>
+        </button>
+        <button class="swatch" data-hex="#1C7C6B">
+          <div class="chip" style="background:#1C7C6B"><span class="copy">Click to copy</span><span class="wd">on dark</span></div>
+          <div class="meta"><div class="name">Signal Teal <span class="hex">#1C7C6B</span></div><div class="role">Supporting only — avatars, subtle "live/ok" states. Never a headline colour.</div></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Ground -->
+    <div class="col-block">
+      <span class="eyebrow dim">Ground · warm darks</span>
+      <div class="swatch-grid">
+        <button class="swatch" data-hex="#0A0A0C">
+          <div class="chip" style="background:#0A0A0C;border-bottom:1px solid var(--hair)"><span class="copy">Click to copy</span><span class="wd">on dark</span></div>
+          <div class="meta"><div class="name">Ink <span class="hex">#0A0A0C</span></div><div class="role">Primary background. The default canvas everywhere.</div></div>
+        </button>
+        <button class="swatch" data-hex="#17110D">
+          <div class="chip" style="background:#17110D;border-bottom:1px solid var(--hair)"><span class="copy">Click to copy</span><span class="wd">on dark</span></div>
+          <div class="meta"><div class="name">Warm Char <span class="hex">#17110D</span></div><div class="role">Hero base — carries the ember glow. Warmer than ink.</div></div>
+        </button>
+        <button class="swatch" data-hex="#15171D">
+          <div class="chip" style="background:#15171D;border-bottom:1px solid var(--hair)"><span class="copy">Click to copy</span><span class="wd">on dark</span></div>
+          <div class="meta"><div class="name">Surface <span class="hex">#15171D</span></div><div class="role">Cards &amp; panels — one step up from the ground.</div></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Text -->
+    <div class="col-block">
+      <span class="eyebrow dim">Text tones</span>
+      <div class="swatch-grid">
+        <button class="swatch" data-hex="#ECE3D8">
+          <div class="chip" style="background:#ECE3D8"><span class="copy">Click to copy</span><span class="wl">on light</span></div>
+          <div class="meta"><div class="name">Bone <span class="hex">#ECE3D8</span></div><div class="role">Headlines &amp; the wordmark. Warm off-white — never pure #FFF.</div></div>
+        </button>
+        <button class="swatch" data-hex="#A79E95">
+          <div class="chip" style="background:#A79E95"><span class="copy">Click to copy</span><span class="wl">on light</span></div>
+          <div class="meta"><div class="name">Muted <span class="hex">#A79E95</span></div><div class="role">Body copy. Warm grey, comfortable at length on dark.</div></div>
+        </button>
+        <button class="swatch" data-hex="#6E6862">
+          <div class="chip" style="background:#6E6862"><span class="copy">Click to copy</span><span class="wd">on dark</span></div>
+          <div class="meta"><div class="name">Faint <span class="hex">#6E6862</span></div><div class="role">Captions, monospace labels, source lines, footnotes.</div></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Gradient -->
+    <div class="col-block">
+      <span class="eyebrow">Signature gradient</span>
+      <div class="grad-banner">
+        <div class="swatch-side"><span class="lbl">Ember → Forge → Amber</span></div>
+        <div class="info">
+          <h3 style="font-size:17px">The Ember Gradient</h3>
+          <p style="font-size:14.5px;color:var(--muted);margin-top:8px">The one gradient in the system. Reserve it for the primary CTA and the single most important word on a page.</p>
+          <code>linear-gradient(100deg,<br>&nbsp;&nbsp;#EA4E1A 0%,<br>&nbsp;&nbsp;#F26A21 45%,<br>&nbsp;&nbsp;#F9A23C 100%)</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TYPE ================= -->
+<section id="type">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Typography</span>
+      <h2>Three voices on the page.</h2>
+      <p class="lead">A heavy grotesque shouts, a tracked monospace whispers the labels, and a clean sans does the talking. The tension between the loud display and the technical mono is the typographic signature.</p>
+    </div>
+
+    <div class="type-row">
+      <div class="role"><b>Display</b>Heavy grotesque<br>800–900 · tight tracking</div>
+      <div>
+        <div class="spec-display">Don't hire another<br>cold email agency.</div>
+        <div class="scale"><span>clamp(44–82px)</span><span>weight 800</span><span>letter-spacing −0.02em</span><span>line-height 1.04</span></div>
+      </div>
+    </div>
+
+    <div class="type-row">
+      <div class="role"><b>Label</b>Monospace<br>uppercase · tracked</div>
+      <div>
+        <div class="spec-label">Attention: B2B Agency Owners</div>
+        <div class="scale"><span>12–13px</span><span>letter-spacing 0.24em</span><span>uppercase</span><span>forge or flow</span></div>
+      </div>
+    </div>
+
+    <div class="type-row">
+      <div class="role"><b>Body</b>Clean sans<br>regular · 1.6 line-height</div>
+      <div>
+        <div class="spec-body">Here's how to get 15–20 qualified calls over 60–90 days — no monthly retainer, and no cold email that makes you look cheap.</div>
+        <div class="scale"><span>16–21px</span><span>weight 400</span><span>~60ch measure</span><span>muted grey</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= VOICE ================= -->
+<section id="voice">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow cold">Voice</span>
+      <h2>How the brand speaks.</h2>
+      <p class="lead">The visual identity is only half the brand. CFF sounds specific, honest, and plain-spoken — anti-hype by design. These are the non-negotiable guardrails.</p>
+    </div>
+
+    <div class="voice-grid">
+      <div class="vcard">
+        <h3>Principles</h3>
+        <ul class="vlist">
+          <li><strong>Mirror their words.</strong> Their vernacular is the proof you understand them.</li>
+          <li><strong>Specificity over superlatives.</strong> Exact numbers and names, never "world-class."</li>
+          <li><strong>No invented proof.</strong> CFF is early and honest about it — that honesty is the trust asset.</li>
+          <li><strong>Sell the destination.</strong> The outcome and the feeling, not the process jargon.</li>
+          <li><strong>6th-grade reading level.</strong> Short sentences, one thought per line. Read it aloud.</li>
+        </ul>
+      </div>
+      <div class="vcard">
+        <h3>Banned phrases</h3>
+        <ul class="vlist warn">
+          <li><s>innovative · seamless · world-class</s></li>
+          <li><s>synergy · cutting-edge · best-in-class</s></li>
+          <li><s>revolutionary · next-level · game-changer</s></li>
+          <li><s>"buyer conversations" · "qualified opportunity flow"</s></li>
+        </ul>
+        <div style="margin-top:22px">
+          <span class="eyebrow dim" style="font-size:11px">The line to protect</span>
+          <div class="mirror">"Referrals are like rain. Great when it comes — but you don't control the weather."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MOTIFS ================= -->
+<section id="motifs">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Motifs</span>
+      <h2>The recurring devices.</h2>
+    </div>
+    <div class="motif-grid">
+      <div class="motif">
+        <div class="demo glow"></div>
+        <div class="cap"><b>Ember glow.</b> A soft radial of forge orange bleeding up from a corner or behind a headline. Signals heat without hard edges.</div>
+      </div>
+      <div class="motif">
+        <div class="demo warnbadge"><span class="warn-pill">⚠ Warning</span></div>
+        <div class="cap"><b>Warning pill.</b> Outlined ember chip for the pattern-interrupt beat. Used once, high on the page.</div>
+      </div>
+      <div class="motif">
+        <div class="demo labelmono"><span class="a">Controlled Outbound</span><span class="b">Source: SparkToro</span></div>
+        <div class="cap"><b>Mono labels.</b> Tracked uppercase monospace for eyebrows, sources, and taglines — the "technical" texture.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="lockup">
+      <span class="badge" style="--s:38px"><span class="c">C</span>FF</span>
+      <span class="wordmark" style="font-size:14px">Cold Flow Forge</span>
+    </div>
+    <div class="note">
+      <b>On these values:</b> the hex codes were eyedropped from a screenshot of coldflowforge.com, so they're a faithful match to what renders — but if you have the site's source CSS, drop the exact values into <code style="font-family:var(--mono);color:var(--amber)">:root</code> at the top of this file and they'll flow through the whole document. Typeface names are described by role (heavy grotesque / monospace / clean sans) rather than exact families; confirm the precise fonts from the site's stylesheet when you have it.
+    </div>
+    <div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase">Cold Flow Forge · Controlled Outbound · Brand Guidelines v1</div>
+  </div>
+</footer>
+
+<div id="toast">Copied</div>
+
+<script>
+(function(){
+  /* ---- click-to-copy swatches ---- */
+  var toast = document.getElementById('toast'), t;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(t); t = setTimeout(function(){ toast.classList.remove('show'); }, 1400);
+  }
+  document.querySelectorAll('.swatch').forEach(function(b){
+    b.addEventListener('click', function(){
+      var hex = b.getAttribute('data-hex');
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(hex).then(function(){ showToast(hex + ' copied'); },
+          function(){ showToast(hex); });
+      } else { showToast(hex); }
+    });
+  });
+
+  /* ---- subtle forge embers in the hero ---- */
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce) return;
+  var cv = document.getElementById('embers');
+  if(!cv) return;
+  var ctx = cv.getContext('2d'), W, H, DPR = Math.min(window.devicePixelRatio||1, 2);
+  var parts = [];
+  function resize(){
+    var r = cv.getBoundingClientRect();
+    W = r.width; H = r.height;
+    cv.width = W*DPR; cv.height = H*DPR;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  function seed(){
+    parts = [];
+    var n = Math.max(14, Math.min(34, Math.round(W/38)));
+    for(var i=0;i<n;i++) parts.push(mk(true));
+  }
+  function mk(init){
+    return {
+      x: Math.random()*W,
+      y: init ? Math.random()*H : H + 8,
+      r: 0.6 + Math.random()*1.7,
+      s: 0.15 + Math.random()*0.5,
+      drift: (Math.random()-0.5)*0.3,
+      a: 0.15 + Math.random()*0.4,
+      hue: Math.random() < 0.4 ? '#F9A23C' : '#F26A21'
+    };
+  }
+  var raf;
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    for(var i=0;i<parts.length;i++){
+      var p = parts[i];
+      p.y -= p.s; p.x += p.drift;
+      if(p.y < -10){ parts[i] = mk(false); continue; }
+      var fade = p.y < H*0.28 ? Math.max(0, p.y/(H*0.28)) : 1;
+      ctx.beginPath();
+      ctx.fillStyle = p.hue;
+      ctx.globalAlpha = p.a * fade;
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    raf = requestAnimationFrame(tick);
+  }
+  function start(){ resize(); seed(); cancelAnimationFrame(raf); tick(); }
+  window.addEventListener('resize', function(){ resize(); seed(); });
+  start();
+})();
+</script>
