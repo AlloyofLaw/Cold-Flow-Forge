@@ -236,6 +236,24 @@
   color:var(--muted-dark);
   background:rgba(26,22,17,.02);
 }
+#cff .vsl{
+  position:relative;
+  width:100%;
+  aspect-ratio:16/9;
+  margin-top:34px;
+  border:1px solid var(--hair-strong);
+  border-radius:12px;
+  overflow:hidden;
+  background:rgba(255,255,255,.02);
+}
+#cff .vsl iframe{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border:0;
+  display:block;
+}
 
 /* ================= hero ================= */
 #cff .hero{position:relative;overflow:hidden;padding-top:84px;padding-bottom:92px}
@@ -499,7 +517,7 @@
         <a class="cta" href="#book">Start My Free Audit →</a>
         <div class="cta-sub">Free · 30 minutes · nothing to prepare.</div>
       </div>
-      <div class="slot" role="img" aria-label="Video sales letter placeholder">[ VSL video embed ]</div>
+      <div class="vsl"><iframe src="https://www.youtube.com/embed/WNH-aqNY1AM" title="Cold Flow Forge" loading="lazy" allow="accelerated-download; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen frameborder="0"></iframe></div>
     </div>
   </section>
 
