@@ -110,17 +110,25 @@
 #cff .subhead{font-size:clamp(17px,2.4vw,20px);line-height:1.6;margin-top:22px}
 
 /* letter rhythm — big, airy, one-thought-per-line paragraphs (KingKong scale) */
-#cff .letter p{font-size:clamp(20px,2.4vw,27px);line-height:1.55;margin-top:22px}
+#cff .letter p{font-size:clamp(21px,2.7vw,30px);line-height:1.55;margin-top:22px}
 #cff .letter p:first-child{margin-top:0}
 
 /* big narrative body copy from section 2 onward — left-aligned in the centered column.
    direct-child prose paragraphs only; components (pillars/stats/timeline/faq/trust/guarantee),
    the hero, and special paragraph types keep their own sizing. */
 #cff .sec:not(.hero) .col > p:not(.beat):not(.bigidea):not(.pullquote):not(.subhead){
-  font-size:clamp(20px,2.4vw,27px);
+  font-size:clamp(21px,2.7vw,30px);
   line-height:1.55;
 }
 #cff .sec:not(.hero) .col > p + p{margin-top:24px}
+
+/* narrative body prose — high-contrast per theme: near-black on paper, near-bone on dark.
+   scoped to the narrative paragraphs only — eyebrows, badges, stats, chart text,
+   beats, CTA sub-text, mono labels and FAQ meta keep their own color. */
+#cff .sec--light .letter p,
+#cff .sec--light:not(.hero) .col > p:not(.beat):not(.bigidea):not(.pullquote):not(.subhead){color:#171310}
+#cff .sec--dark:not(.hero) .col > p:not(.beat):not(.bigidea):not(.pullquote):not(.subhead),
+#cff .sec--char:not(.hero) .col > p:not(.beat):not(.bigidea):not(.pullquote):not(.subhead){color:#E6DED3}
 
 /* the "cue angels singing" style beat */
 #cff .beat{
