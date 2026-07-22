@@ -1,0 +1,1069 @@
+<!-- Cold Flow Forge — paste into a Carrd 'Embed > Code' element -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   COLD FLOW FORGE — landing page
+   ALL styles scoped under #cff so nothing leaks into Carrd.
+   ============================================================ */
+
+#cff{
+  /* --- Forge (heat) --- */
+  --forge:#F26A21;
+  --amber:#F9A23C;
+  --ember:#EA4E1A;
+  /* --- Cold (flow / proof) --- */
+  --flow:#4FA6E0;
+  --ice:#8FC9EE;
+  /* --- Ground (warm darks) --- */
+  --ink:#0A0A0C;
+  --char:#17110D;
+  --surface:#15171D;
+  --surface-2:#1B1E26;
+  --hair:rgba(255,255,255,.09);
+  --hair-strong:rgba(255,255,255,.16);
+  /* --- Dark text tones --- */
+  --bone:#ECE3D8;
+  --muted:#A79E95;
+  --faint:#6E6862;
+  /* --- Light (paper) --- */
+  --paper:#F2EDE5;
+  --paper-card:#FBF8F3;
+  --paper-line:rgba(26,22,17,.12);
+  --ink-dark:#1A1611;
+  --muted-dark:#5C554D;
+  /* --- signature gradient --- */
+  --grad:linear-gradient(100deg,#EA4E1A 0%,#F26A21 45%,#F9A23C 100%);
+  /* --- type --- */
+  --display:"Archivo Black","Arial Black","Helvetica Neue",Impact,sans-serif;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","JetBrains Mono","IBM Plex Mono",Menlo,Consolas,monospace;
+  --col:680px;
+
+  font-family:var(--sans);
+  color:var(--muted);
+  background:var(--ink);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+  position:relative;
+}
+
+/* ---- scoped resets (never touch bare body/html/*) ---- */
+#cff *{box-sizing:border-box}
+#cff h1,#cff h2,#cff h3,#cff h4,#cff p,#cff ul,#cff figure,#cff table{margin:0}
+#cff ul{padding:0;list-style:none}
+#cff a{color:inherit;text-decoration:none}
+#cff strong{font-weight:700}
+#cff em{font-style:italic}
+#cff img{max-width:100%}
+#cff ::selection{background:var(--forge);color:#0a0a0c}
+
+/* ================= layout primitives ================= */
+#cff .sec{padding:96px 20px;position:relative}
+#cff .col{max-width:var(--col);margin:0 auto}
+#cff .col--wide{max-width:860px}
+
+/* section theming — driven by a dark/light class pair, not per-section overrides */
+#cff .sec--dark{background:var(--ink);color:var(--muted)}
+#cff .sec--char{background:var(--char);color:var(--muted)}
+#cff .sec--light{background:var(--paper);color:var(--muted-dark)}
+
+#cff .sec--dark h1,#cff .sec--dark h2,#cff .sec--dark h3,#cff .sec--char h1,#cff .sec--char h2,#cff .sec--char h3{color:var(--bone)}
+#cff .sec--light h1,#cff .sec--light h2,#cff .sec--light h3{color:var(--ink-dark)}
+#cff .sec--dark strong,#cff .sec--char strong{color:var(--bone)}
+#cff .sec--light strong{color:var(--ink-dark)}
+
+/* ================= type ================= */
+#cff h1,#cff h2,#cff h3{
+  font-family:var(--display);
+  font-weight:400;
+  text-wrap:balance;
+  letter-spacing:-0.005em;
+  line-height:1.08;
+  text-transform:none;
+}
+#cff h1{font-size:clamp(40px,8.2vw,64px);line-height:1.06}
+#cff h2{font-size:clamp(30px,5.6vw,48px);line-height:1.08}
+#cff h3{font-size:clamp(21px,3.8vw,28px);line-height:1.12}
+
+#cff .eyebrow{
+  font-family:var(--mono);
+  font-size:12px;font-weight:600;
+  letter-spacing:.26em;text-transform:uppercase;
+  color:var(--forge);
+  display:inline-block;
+  margin-bottom:20px;
+}
+#cff .eyebrow--cold{color:#1B3E6B}
+
+#cff p{font-size:17px}
+#cff .sec p + p{margin-top:18px}
+#cff .lead p{font-size:clamp(17px,2.2vw,19px)}
+#cff .subhead{font-size:clamp(17px,2.4vw,20px);line-height:1.6;margin-top:22px}
+
+/* letter rhythm — big, airy, one-thought-per-line paragraphs (KingKong scale) */
+#cff .letter p{font-size:clamp(23px,3vw,34px);line-height:1.55;margin-top:22px}
+#cff .letter p:first-child{margin-top:0}
+#cff .more-stack span{display:block}
+#cff .more-stack span + span{margin-top:16px}
+
+/* big narrative body copy from section 2 onward — left-aligned in the centered column.
+   direct-child prose paragraphs only; components (pillars/stats/timeline/faq/trust/guarantee),
+   the hero, and special paragraph types keep their own sizing. */
+#cff .sec:not(.hero) .col > p:not(.beat):not(.bigidea):not(.pullquote):not(.subhead){
+  font-size:clamp(23px,3vw,34px);
+  line-height:1.55;
+}
+#cff .sec:not(.hero) .col > p + p{margin-top:24px}
+
+/* narrative body prose — high-contrast per theme: near-black on paper, near-bone on dark.
+   scoped to the narrative paragraphs only — eyebrows, badges, stats, chart text,
+   beats, CTA sub-text, mono labels and FAQ meta keep their own color. */
+#cff .sec--light .letter p,
+#cff .sec--light:not(.hero) .col > p:not(.beat):not(.bigidea):not(.pullquote):not(.subhead){color:#171310}
+
+/* the "cue angels singing" style beat */
+#cff .beat{
+  display:block;
+  font-style:italic;
+  font-size:14px;
+  color:var(--faint);
+  letter-spacing:.01em;
+  margin-top:18px;
+}
+#cff .sec--light .beat{color:var(--muted-dark)}
+
+/* the big-idea standout line */
+#cff .bigidea{
+  font-family:var(--display);
+  font-weight:400;
+  font-size:clamp(26px,4.6vw,40px);
+  line-height:1.08;
+  color:var(--ink-dark);
+  margin:34px 0;
+  padding-left:20px;
+  border-left:4px solid transparent;
+  border-image:var(--grad) 1;
+  text-wrap:balance;
+}
+#cff .sec--dark .bigidea{color:var(--bone)}
+
+/* underlined mechanism phrases */
+#cff .mech{
+  color:inherit;font-weight:700;
+  background:linear-gradient(transparent 62%,rgba(242,106,33,.28) 62%);
+}
+#cff .sec--dark .mech,#cff .sec--char .mech{color:var(--bone)}
+#cff .sec--light .mech{color:var(--ink-dark)}
+
+/* ================= logo lockup ================= */
+#cff .lockup{display:inline-flex;align-items:center;gap:13px}
+#cff .badge{
+  --s:44px;
+  width:var(--s);height:var(--s);
+  border-radius:10px;
+  background:linear-gradient(160deg,#211913,#0e0b09);
+  border:1px solid var(--hair-strong);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-weight:700;
+  font-size:calc(var(--s)*.33);letter-spacing:.05em;
+  color:var(--bone);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+  flex:none;
+}
+#cff .badge .c{color:var(--forge)}
+#cff .wordmark{
+  font-family:var(--sans);font-weight:800;
+  letter-spacing:.03em;color:var(--bone);
+  font-size:15px;text-transform:uppercase;white-space:nowrap;
+}
+
+/* ================= nav ================= */
+#cff .nav{
+  position:sticky;top:0;z-index:40;
+  background:rgba(10,10,12,.86);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--hair);
+}
+#cff .nav-inner{
+  max-width:1080px;margin:0 auto;padding:13px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+#cff .nav .wordmark{font-size:13px}
+#cff .nav-tag{
+  font-family:var(--mono);font-size:11px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--faint);
+  white-space:nowrap;
+}
+@media(max-width:520px){ #cff .nav-tag{display:none} }
+
+/* ================= CTA button ================= */
+#cff .cta{
+  display:inline-flex;align-items:center;justify-content:center;gap:.4em;
+  font-family:var(--sans);font-weight:800;font-size:16px;
+  letter-spacing:.02em;text-transform:uppercase;
+  color:#1A0F06;
+  background:var(--grad);
+  border:none;border-radius:12px;
+  padding:19px 34px;
+  cursor:pointer;
+  box-shadow:0 8px 24px -8px rgba(242,106,33,.55);
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+  text-align:center;
+  margin-inline:auto;
+}
+#cff .cta:hover{transform:translateY(-2px);box-shadow:0 14px 30px -8px rgba(242,106,33,.6);filter:saturate(1.06)}
+#cff .cta:focus-visible{outline:3px solid var(--forge);outline-offset:3px}
+#cff .cta-wrap{margin-top:38px;text-align:center}
+#cff .cta-sub{
+  font-family:var(--mono);font-size:12px;letter-spacing:.06em;
+  color:var(--faint);margin-top:14px;
+}
+#cff .sec--light .cta-sub{color:var(--muted-dark)}
+#cff .hype{
+  font-family:var(--display);
+  font-size:clamp(20px,3.2vw,26px);
+  color:var(--forge);
+  margin-bottom:16px;
+  letter-spacing:.01em;
+}
+
+/* ================= placeholder slots ================= */
+#cff .slot{
+  border:1px dashed var(--hair-strong);
+  border-radius:14px;
+  min-height:210px;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  padding:32px 24px;
+  font-family:var(--mono);font-size:13px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--faint);
+  background:rgba(255,255,255,.02);
+  margin-top:34px;
+}
+#cff .sec--light .slot{
+  border-color:var(--paper-line);
+  color:var(--muted-dark);
+  background:rgba(26,22,17,.02);
+}
+#cff .vsl{
+  position:relative;
+  width:100%;
+  aspect-ratio:16/9;
+  margin-top:34px;
+  border:1px solid var(--hair-strong);
+  border-radius:12px;
+  overflow:hidden;
+  background:rgba(255,255,255,.02);
+}
+#cff .vsl iframe{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border:0;
+  display:block;
+}
+
+/* ================= hero ================= */
+#cff .hero{position:relative;overflow:hidden;padding-top:84px;padding-bottom:92px}
+#cff .hero::before{
+  content:"";position:absolute;z-index:0;pointer-events:none;
+  width:820px;height:820px;left:50%;top:-320px;transform:translateX(-50%);
+  background:radial-gradient(circle at center,
+    rgba(242,106,33,.28) 0%,rgba(234,78,26,.13) 34%,transparent 64%);
+  filter:blur(6px);
+}
+#cff .hero .col{position:relative;z-index:1}
+/* hero content is centered (this section only) — every other section stays left-aligned */
+#cff .hero .col{text-align:center}
+#cff .hero .vsl{margin-inline:auto}
+/* CTA button + its hype line/sub-text are centered site-wide via base .cta-wrap */
+#cff .hero .badge-row{margin-bottom:34px}
+#cff .hero h1{margin:22px 0 0}
+/* one key word of the hero headline — its own VIVID orange→gold sweep, brighter
+   than --grad, to match the live site's hot "warning"-style hero highlight */
+#cff .hero h1 .flame{
+  color:#FA7A1C; /* solid orange fallback if background-clip:text is unsupported */
+  background:linear-gradient(95deg,#F14E17 0%,#FA7A1C 48%,#FBB236 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+}
+/* de-emphasized support line under the subhead (centered within the hero) */
+#cff .hero .hero-support{
+  font-size:15px;color:var(--faint);line-height:1.55;
+  margin-top:18px;
+}
+
+/* ================= re-hook band ================= */
+#cff .band{background:var(--char);position:relative;overflow:hidden}
+#cff .band::before{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(circle at 50% -10%,rgba(242,106,33,.18),transparent 58%);
+}
+#cff .band .col{position:relative;z-index:1;text-align:center}
+#cff .band h2{
+  background:var(--grad);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  font-size:clamp(30px,6vw,52px);
+}
+
+/* ================= numbered pillars (sec 8) ================= */
+#cff .pillars{margin-top:38px;display:flex;flex-direction:column;gap:2px}
+#cff .pillar{
+  display:grid;grid-template-columns:56px 1fr;gap:18px;align-items:start;
+  padding:22px 4px;border-top:1px solid var(--hair);
+}
+#cff .pillar:last-child{border-bottom:1px solid var(--hair)}
+#cff .pillar .n{
+  font-family:var(--display);font-size:34px;line-height:1;
+  color:var(--forge);letter-spacing:.02em;
+}
+#cff .pillar p{font-size:16px;margin:0}
+#cff .pillar b{color:var(--bone);font-weight:700}
+
+/* ================= stat rows (sec 9) ================= */
+#cff .stats{margin:26px 0 0;display:flex;flex-direction:column}
+#cff .statrow{
+  display:grid;grid-template-columns:130px 1fr;gap:20px;align-items:baseline;
+  padding:18px 4px;border-top:1px solid var(--paper-line);
+}
+#cff .statrow:last-child{border-bottom:1px solid var(--paper-line)}
+#cff .statnum{
+  font-family:var(--display);font-size:clamp(30px,5vw,40px);line-height:1;
+  letter-spacing:.01em;
+}
+#cff .statnum--cold{color:#1B3E6B}
+#cff .statnum--hot{color:var(--forge)}
+#cff .statdesc{font-size:16px;line-height:1.5}
+#cff .part-label{
+  font-family:var(--sans);font-weight:800;font-size:15px;
+  color:var(--ink-dark);text-transform:none;
+  margin:44px 0 6px;letter-spacing:0;
+}
+#cff .part-label:first-of-type{margin-top:34px}
+
+/* ================= fit lists (sec 16) ================= */
+#cff .fit-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:34px}
+@media(max-width:640px){ #cff .fit-grid{grid-template-columns:1fr} }
+#cff .fit-card{
+  border:1px solid var(--hair);border-radius:16px;
+  background:var(--surface);padding:28px 26px;
+}
+#cff .fit-card h4{
+  font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+  font-weight:600;margin:0 0 18px;
+}
+#cff .fit-card.yes h4{color:var(--flow)}
+#cff .fit-card.no h4{color:var(--ember)}
+#cff .fit-card li{
+  font-size:15.5px;line-height:1.5;padding-left:22px;position:relative;margin-top:13px;
+  color:var(--muted);
+}
+#cff .fit-card li:first-child{margin-top:0}
+#cff .fit-card li::before{
+  content:"";position:absolute;left:0;top:9px;width:9px;height:9px;transform:rotate(45deg);
+}
+#cff .fit-card.yes li::before{background:var(--flow)}
+#cff .fit-card.no li::before{background:var(--ember);transform:none;border-radius:50%}
+
+/* ================= timeline (sec 12) ================= */
+#cff .timeline{margin-top:34px;display:flex;flex-direction:column;gap:0}
+#cff .tl{
+  padding:22px 4px;border-top:1px solid var(--hair);
+}
+#cff .tl:last-child{border-bottom:1px solid var(--hair)}
+#cff .tl b{color:var(--bone);font-weight:700}
+#cff .tl p{margin:0;font-size:16px}
+
+/* ================= badge pill (sec 10/11/18) ================= */
+#cff .pill{
+  display:inline-block;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--forge);
+  border:1px solid rgba(242,106,33,.4);
+  background:rgba(242,106,33,.07);
+  border-radius:999px;padding:9px 16px;margin-bottom:22px;
+}
+#cff .sec--light .pill{background:rgba(242,106,33,.09);border-color:rgba(242,106,33,.35)}
+
+/* ================= trust line block (sec 10) ================= */
+#cff .trust{
+  margin-top:40px;padding:26px 26px;
+  border:1px solid var(--hair);border-radius:16px;background:var(--surface);
+}
+#cff .trust p{font-size:16px}
+
+/* ================= signature (sec 14) ================= */
+#cff .signature{
+  font-family:var(--display);font-size:34px;color:var(--bone);
+  letter-spacing:.02em;margin-top:30px;
+}
+#cff .pullquote{
+  font-size:19px;font-style:italic;color:var(--bone);
+  border-left:3px solid transparent;border-image:var(--grad) 1;
+  padding:4px 0 4px 20px;margin:26px 0;line-height:1.45;
+}
+#cff .sec--light .pullquote{color:var(--ink-dark)}
+
+/* ================= guarantee callout ================= */
+#cff .guarantee{
+  margin-top:34px;padding:28px 28px;border-radius:16px;
+  border:1px solid var(--paper-line);background:var(--paper-card);
+}
+#cff .sec--dark .guarantee,#cff .sec--char .guarantee{border-color:var(--hair);background:var(--surface)}
+#cff .guarantee .g-label{
+  font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--forge);margin-bottom:14px;display:block;
+}
+#cff .checklist li{
+  font-size:16px;line-height:1.55;padding-left:26px;position:relative;margin-top:14px;
+}
+#cff .checklist li:first-child{margin-top:0}
+#cff .checklist li::before{
+  content:"";position:absolute;left:0;top:7px;width:11px;height:11px;
+  background:var(--grad);border-radius:3px;
+}
+
+/* ================= FAQ ================= */
+#cff .faq{margin-top:34px}
+#cff .faq-item{border-top:1px solid var(--paper-line);padding:24px 0}
+#cff .faq-item:last-child{border-bottom:1px solid var(--paper-line)}
+#cff .faq-q{
+  font-family:var(--sans);font-weight:800;font-size:18px;color:var(--ink-dark);
+  margin:0 0 10px;letter-spacing:0;line-height:1.3;
+}
+#cff .faq-a{font-size:17px;line-height:1.6}
+
+/* ================= chart cards (inlined, re-themed, scoped) ================= */
+#cff .chartcard{
+  max-width:820px;margin:34px auto 0;
+  background:var(--surface);border:1px solid var(--hair);
+  border-radius:16px;padding:26px 26px 22px;
+}
+#cff .cx-eyebrow{
+  font-family:var(--mono);
+  font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;
+  margin:0 0 8px;
+}
+#cff .chartcard.feast .cx-eyebrow{color:var(--forge)}
+#cff .chartcard.dial .cx-eyebrow{color:var(--flow)}
+#cff .cx-title{
+  font-family:var(--display);font-weight:400;color:var(--bone);
+  font-size:clamp(22px,3.6vw,28px);line-height:1.1;letter-spacing:.01em;margin:0 0 6px;
+}
+#cff .cx-sub{font-size:14px;color:var(--muted);margin:0 0 18px;line-height:1.5}
+#cff .chartcard svg{width:100%;height:auto;display:block}
+#cff .cx-peak{fill:var(--forge);font-size:11px;font-weight:800;letter-spacing:.08em;font-family:var(--sans)}
+#cff .cx-trough{fill:var(--muted);font-size:11px;font-weight:800;letter-spacing:.08em;font-family:var(--sans)}
+#cff .cx-tick{fill:var(--faint);font-size:11px;font-family:var(--sans)}
+#cff .cx-grid{stroke:var(--hair);stroke-width:1;stroke-dasharray:2 4}
+#cff .cx-axis{stroke:var(--hair-strong);stroke-width:1}
+#cff .cx-barlabel{font-size:15px;font-weight:800;font-family:var(--sans)}
+#cff .cx-rate{fill:var(--flow);font-size:11.5px;font-weight:800;letter-spacing:.04em;font-family:var(--sans)}
+#cff .cx-dial{font-size:13px;color:var(--bone);font-weight:700;margin:16px 2px 0;text-align:center}
+#cff .cx-dial span{color:var(--flow)}
+#cff .cx-caption{
+  font-size:11.5px;color:var(--faint);line-height:1.55;margin:14px 2px 0;
+  border-top:1px solid var(--hair);padding-top:12px;
+}
+#cff .cx-caption strong{color:var(--muted)}
+#cff .cx-table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12.5px}
+#cff .cx-table th,#cff .cx-table td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--hair);color:var(--muted)}
+#cff .cx-table th{color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:10.5px;font-family:var(--mono)}
+#cff .cx-table td:first-child{color:var(--bone);font-weight:700}
+
+/* subtle gradient divider motif */
+#cff .rule{height:3px;width:64px;background:var(--grad);border-radius:3px;margin:0 auto 30px}
+
+/* ================= sticky mobile CTA ================= */
+#cff .sticky-cta{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;
+  padding:12px 14px calc(12px + env(safe-area-inset-bottom,0));
+  background:rgba(10,10,12,.92);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-top:1px solid var(--hair);
+}
+#cff .sticky-cta .cta{width:100%;padding:16px 18px;font-size:15px}
+@media(min-width:768px){ #cff .sticky-cta{display:none} }
+@media(max-width:767px){ #cff{padding-bottom:76px} }
+
+/* ================= responsive ================= */
+@media(max-width:600px){
+  #cff .sec{padding:70px 18px}
+  #cff .statrow{grid-template-columns:100px 1fr;gap:14px}
+  #cff .pillar{grid-template-columns:44px 1fr;gap:14px}
+  #cff .chartcard{padding:20px 16px 18px}
+}
+
+/* ================= motion / focus ================= */
+#cff a:focus-visible,#cff button:focus-visible{outline:3px solid var(--forge);outline-offset:3px;border-radius:4px}
+@media(prefers-reduced-motion:reduce){
+  #cff .cta{transition:none}
+  #cff .cta:hover{transform:none}
+}
+</style>
+
+<div id="cff">
+
+  <!-- ================= NAV ================= -->
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="lockup" href="#top" aria-label="Cold Flow Forge — home">
+        <span class="badge"><span class="c">C</span>FF</span>
+        <span class="wordmark">Cold Flow Forge</span>
+      </a>
+      <span class="nav-tag">Controlled Outbound</span>
+    </div>
+  </header>
+
+  <a id="top"></a>
+
+  <!-- ================= 1 · HERO ================= -->
+  <section class="sec sec--char hero">
+    <div class="col">
+      <span class="eyebrow">For the agency owner who still runs their own sales.</span>
+      <h1>An SDR that can't <span class="flame">quit.</span></h1>
+      <div class="subhead">Growing an agency is hard. We keep your calendar full of qualified calls — 15–20 in your first 60–90 days, steady and predictable, without you chasing referrals. No mass blasts. No emails that make you look cheap.</div>
+      <p class="hero-support">Not a hire. No salary. No $4,000 retainer. You only pay when a real call actually shows up — so we can't quit on you.</p>
+      <div class="vsl"><iframe src="https://www.youtube.com/embed/WNH-aqNY1AM" title="Cold Flow Forge" loading="lazy" allow="accelerated-download; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen frameborder="0"></iframe></div>
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+        <div class="cta-sub">Free · 30 minutes · nothing to prepare.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2 · THE LETTER ================= -->
+  <section class="sec sec--light">
+    <div class="col letter">
+      <span class="eyebrow">Read this if your calendar keeps going quiet</span>
+      <p>Dear agency owner,</p>
+      <p>We get it.</p>
+      <p>Running an agency is hard. Really f*cking hard.</p>
+      <p>You're great at the work. Clients are happy. But there's a pit in your stomach that won't quit — <em>where's the next one coming from?</em></p>
+      <p>One month you're slammed. The next? Crickets.</p>
+      <p>A referral dries up. A warm lead goes cold.</p>
+      <p>Then the email lands. Your biggest client is taking it in-house.</p>
+      <p>Half your revenue. Gone in one line.</p>
+      <p>You feel devastated. You wonder if it's even worth it.</p>
+      <p>And you can't sleep. Staring at the ceiling like a teething two-year-old.</p>
+      <p>So what do you do?</p>
+      <p>Post on LinkedIn five times a day?<br>Fire up the cold DMs?<br>Buy another course?<br>Hire an SDR for $60k and pray he doesn't quit inside a year?<br>Blast 5,000 emails and hope?</p>
+      <p class="beat">someone hide my credit card</p>
+      <p>Look — most agency owners have a bad case of "I'll just do it myself."</p>
+      <p>Mixed with a scoop of "I don't have time." And a sprinkle of "I'll get to sales next week."</p>
+      <p>So they do a little of this. A little of that. And the whole pipeline runs on hope.</p>
+      <p>We call that the feast-or-famine rollercoaster.</p>
+      <p>Also known as hell.</p>
+      <p>And we'd rather cold-email our own mother-in-law than watch one more good agency ride it.</p>
+      <p>But this isn't about us. It's about you.</p>
+      <p>You're reading this because, some way, your pipeline isn't where you want it.</p>
+      <p>Or maybe it's flying — and you just want more.</p>
+      <p class="more-stack"><span>More security.</span><span>More money.</span><span><strong>More freedom.</strong></span><span>More nights you actually sleep.</span><span><strong>More picking your clients instead of chasing them.</strong></span></p>
+      <p>Whatever it is for you…</p>
+      <p>It starts with one button below.</p>
+      <p class="beat">*cue angels singing*</p>
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3 · THE ROLLERCOASTER (feast-or-famine chart) ================= -->
+  <section class="sec sec--dark">
+    <div class="col--wide" style="margin:0 auto">
+      <figure class="chartcard feast">
+        <p class="cx-eyebrow">The ride you're on</p>
+        <h3 class="cx-title">The feast-or-famine rollercoaster.</h3>
+        <p class="cx-sub">One month you're slammed. The next? Crickets. Land clients → too busy to prospect → pipeline dries up → panic → repeat.</p>
+
+        <svg viewBox="0 0 820 360" role="img" aria-label="A jagged line showing new business spiking (feast) then crashing (famine) month after month.">
+          <line class="cx-grid" x1="70" y1="300" x2="790" y2="300"></line>
+          <line class="cx-grid" x1="70" y1="222" x2="790" y2="222"></line>
+          <line class="cx-grid" x1="70" y1="144" x2="790" y2="144"></line>
+          <line class="cx-grid" x1="70" y1="66"  x2="790" y2="66"></line>
+          <text class="cx-tick" x="30" y="175" text-anchor="middle" transform="rotate(-90 30 175)">New business</text>
+          <line class="cx-axis" x1="70" y1="300" x2="790" y2="300"></line>
+          <polyline fill="none" stroke="#F26A21" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"
+            points="70,222 149,92 228,235 306,79 385,248 464,97 543,243 622,87 701,253 780,157"></polyline>
+          <g fill="#F26A21">
+            <circle cx="70" cy="222" r="4"></circle>
+            <circle cx="149" cy="92" r="4"></circle>
+            <circle cx="228" cy="235" r="4"></circle>
+            <circle cx="306" cy="79" r="4"></circle>
+            <circle cx="385" cy="248" r="4"></circle>
+            <circle cx="464" cy="97" r="4"></circle>
+            <circle cx="543" cy="243" r="4"></circle>
+            <circle cx="622" cy="87" r="4"></circle>
+            <circle cx="701" cy="253" r="4"></circle>
+            <circle cx="780" cy="157" r="4"></circle>
+          </g>
+          <text class="cx-peak"   x="149" y="80"  text-anchor="middle">FEAST</text>
+          <text class="cx-peak"   x="464" y="85"  text-anchor="middle">FEAST</text>
+          <text class="cx-trough" x="385" y="266" text-anchor="middle">FAMINE</text>
+          <text class="cx-trough" x="701" y="271" text-anchor="middle">FAMINE</text>
+          <text class="cx-tick" x="70"  y="320" text-anchor="middle">M1</text>
+          <text class="cx-tick" x="228" y="320" text-anchor="middle">M3</text>
+          <text class="cx-tick" x="385" y="320" text-anchor="middle">M5</text>
+          <text class="cx-tick" x="543" y="320" text-anchor="middle">M7</text>
+          <text class="cx-tick" x="701" y="320" text-anchor="middle">M9</text>
+          <text class="cx-tick" x="425" y="345" text-anchor="middle">Months →</text>
+        </svg>
+
+        <table class="cx-table">
+          <thead><tr><th>Month</th><th>What's happening</th><th>New business</th></tr></thead>
+          <tbody>
+            <tr><td>M2 · Feast</td><td>Landed clients, feel amazing</td><td>High</td></tr>
+            <tr><td>M3 · Slip</td><td>Too busy delivering to prospect</td><td>Falling</td></tr>
+            <tr><td>M5 · Famine</td><td>Pipeline empty, panic mode</td><td>Low</td></tr>
+            <tr><td>M6 · Feast</td><td>Scramble, land a few, repeat</td><td>High</td></tr>
+          </tbody>
+        </table>
+
+        <figcaption class="cx-caption">
+          <strong>Illustrative</strong> — the cycle most agencies run on, not your data. The whole point of a system is to flatten this line into something you can actually plan around.
+        </figcaption>
+      </figure>
+      <p style="max-width:var(--col);margin:30px auto 0;text-align:center;color:var(--muted);font-size:16px">One month you're slammed. The next? Crickets. That's the ride. The whole point of a system is to flatten this line.</p>
+    </div>
+  </section>
+
+  <!-- ================= 4 · RE-HOOK BAND ================= -->
+  <section class="sec band">
+    <div class="col">
+      <div class="rule"></div>
+      <h2>FILL YOUR CALENDAR — FASTER, STEADIER, SMARTER.</h2>
+      <p class="subhead" style="margin-left:auto;margin-right:auto;max-width:620px">Skip the guesswork, the referral roulette, and the never-ending sh*t show of chasing your own leads between client work — for good. And instead, grow with <span class="mech">cold outbound done right</span>, a system that runs whether you show up or not, and <span class="mech">qualified calls that actually show up</span>.</p>
+    </div>
+  </section>
+
+  <!-- ================= 5 · WHY YOU'VE PROBABLY BEEN BURNED ================= -->
+  <section class="sec sec--light">
+    <div class="col">
+      <span class="eyebrow">Why you've probably been burned</span>
+      <p>Real talk. You've likely been torched by one of these guys before.</p>
+      <p>Here's how their game works.</p>
+      <p>They charge $4,000 a month up front — before they've proven a single thing.</p>
+      <p>Then they blast out emails. And they count "booked" calls. Whether those people ever show up or not.</p>
+      <p>Maybe you lived it. Maybe you watched it hit a buddy's agency. These are real numbers from real reviews:</p>
+      <p>One agency paid <strong>$18,000. Three months. Zero demos.</strong></p>
+      <p>Another spent <strong>$20,000 over four months.</strong> Promised 10–12 meetings a month. Got <strong>half of one.</strong></p>
+      <p>One got <strong>20 appointments instead of 30</strong> — and 5 weren't even the decision-makers in the contract.</p>
+      <p>One paid <strong>$10,000 for 250 "qualified leads."</strong> The leads were made up.</p>
+      <p>It's enough to make you want to rub scorpion chillies in your eyes.</p>
+      <p>But here's the thing. The channel didn't break.</p>
+      <p class="bigidea">Cold email didn't die. It got done wrong.</p>
+      <p>Done right, it still pulls 3–5% reply rates for senders who play by the rules. The lazy blasts get filtered out. That's a people problem, not an email problem.</p>
+      <p>Now — you're probably thinking the honest thing:</p>
+      <p><em>"Every guy who can't sell says he needs a partner. And nine times out of ten the partner can't sell either… or quits in six months."</em></p>
+      <p>Fair. Dead fair.</p>
+      <p>So here's why that can't happen here.</p>
+      <p>We don't take a salary. We get paid when a real qualified call shows up on your calendar.</p>
+      <p>If we stop delivering, we stop getting paid.</p>
+      <p>We literally can't quit on you. The whole thing is built so we only win when you do.</p>
+      <p>That $4,000-a-month bill? It never stops. Ours flips it. You build the system once. After your first 5 calls, you only pay when a call actually shows.</p>
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 6 · WHAT THAT ACTUALLY BUYS YOU ================= -->
+  <section class="sec sec--dark">
+    <div class="col">
+      <span class="eyebrow">What that actually buys you</span>
+      <p>Picture it.</p>
+      <p>Your calendar full — even the weeks you're slammed.</p>
+      <p>15–20 qualified calls over your first 60–90 days.</p>
+      <p>Payroll covered. No pit in your stomach.</p>
+      <p>You picking your clients. Not chasing them.</p>
+      <p>Saying "no thanks" to the wrong fit — because three right ones are already booked.</p>
+      <p>New conversations starting whether you show up that day or not.</p>
+      <p>When one client pauses, the business doesn't pause with them.</p>
+      <p>Growth stops being the thing you'll "get to later."</p>
+      <p>It happens on purpose. Every week.</p>
+      <p>That's the difference between an agency that owns you… and one you actually own.</p>
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+        <div class="cta-sub">Free · 30 minutes · nothing to prepare.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 7 · THE POWER IS IN THE SYSTEM ================= -->
+  <section class="sec sec--light">
+    <div class="col">
+      <span class="eyebrow">No more hoping and praying</span>
+      <h2 style="text-align:center">THE POWER IS IN THE SYSTEM.</h2>
+      <p style="margin-top:26px">Most agencies grow by trial and error. By hoping and praying.</p>
+      <p>Chase a referral. Fire off some DMs. Cross your fingers and hope the phone rings.</p>
+      <p>We call that guesswork.</p>
+      <p>It's unreliable. It's stressful. And it leaves your whole month riding on whether someone happens to reach out.</p>
+      <p>This is the opposite of that.</p>
+      <p>Not a lucky streak. Not you hustling harder. A system — built, measured, and tuned to a known standard — that turns "hope someone comes" into "calls on the calendar, on purpose."</p>
+      <p>The whole point is to shrink the time it takes you to go from <em>praying the pipeline fills</em>… to <em>watching it fill while you do the work you're actually great at.</em></p>
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 8 · THE COLD FLOW SYSTEM ================= -->
+  <section class="sec sec--dark">
+    <div class="col">
+      <span class="eyebrow">The Cold Flow System</span>
+      <p>Qualified calls don't come from a magic subject line.</p>
+      <p>They come from getting six things right under the email.</p>
+      <p>Miss one and your pipeline leaks. Here's where yours might be bleeding:</p>
+      <div class="pillars">
+        <div class="pillar"><span class="n">01</span><p><b>Sharp targeting.</b> We go after the exact clients you can close. Not everyone with a website.</p></div>
+        <div class="pillar"><span class="n">02</span><p><b>Clean list.</b> Real, checked decision-makers. Not a 2,000-row list of maybes.</p></div>
+        <div class="pillar"><span class="n">03</span><p><b>Protected sending.</b> Separate domains and inboxes. Your main domain is never the crash-test dummy.</p></div>
+        <div class="pillar"><span class="n">04</span><p><b>Human-written messaging.</b> AI helps with research and speed. A real person writes the words that carry your brand.</p></div>
+        <div class="pillar"><span class="n">05</span><p><b>A worked inbox.</b> Every reply gets handled. We sort the real leads from the noise and move them toward a call.</p></div>
+        <div class="pillar"><span class="n">06</span><p><b>A weekly tune-up.</b> The market shows us what's working. We sharpen it every week.</p></div>
+      </div>
+      <p style="margin-top:28px">Get all six right and the calls come. Miss one — or you're not running outbound at all yet — and that's your quiet calendar.</p>
+      <p>We'll show you where you stand on the call.</p>
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 9 · THE VARIABLES WE LIVE BY ================= -->
+  <section class="sec sec--light">
+    <div class="col">
+      <span class="eyebrow eyebrow--cold">How we know it works — before we've worked together</span>
+
+      <div class="part-label">Part 1 — The bar we hold every campaign to</div>
+      <p>We don't <em>hope</em> a campaign is healthy. We measure it against the industry-standard bar for a healthy cold-email campaign:</p>
+      <div class="stats">
+        <div class="statrow"><div class="statnum statnum--cold">50%+</div><div class="statdesc">Open / delivery — your emails actually land.</div></div>
+        <div class="statrow"><div class="statnum statnum--cold">3%+</div><div class="statdesc">Reply rate — the market's talking back.</div></div>
+        <div class="statrow"><div class="statnum statnum--cold">Under 3%</div><div class="statdesc">Bounce — the list is clean, not scraped junk.</div></div>
+        <div class="statrow"><div class="statnum statnum--cold" style="font-size:clamp(20px,3.4vw,26px)">Held rate</div><div class="statdesc">We report the calls that actually happened. Not "booked."</div></div>
+      </div>
+      <p style="margin-top:26px">Miss the bar? We fix it before we scale. Hit it? We turn up the volume.</p>
+
+      <div class="part-label">Part 2 — Then we turn up the dial</div>
+      <p>Here's what most agencies never show you.</p>
+      <p>Once the numbers are healthy, qualified calls aren't luck.</p>
+      <p>They're a dial.</p>
+      <p>More volume → more calls = Predictably.</p>
+
+      <figure class="chartcard dial">
+        <p class="cx-eyebrow">The math behind the calls</p>
+        <h3 class="cx-title">Where the calls actually come from.</h3>
+        <p class="cx-sub">No promises — just the funnel, run to industry-standard benchmarks. Here's one month at steady volume:</p>
+
+        <svg viewBox="0 0 800 470" role="img" aria-label="Funnel: 15,000 contacts to about 18 qualified calls using industry-standard benchmark conversion rates.">
+          <rect x="80" y="64" width="640" height="52" rx="7" fill="#153B55"></rect>
+          <text class="cx-barlabel" x="400" y="96" text-anchor="middle" fill="#ECE3D8">15,000 contacts emailed</text>
+          <text class="cx-rate" x="400" y="133" text-anchor="middle">↓  50%+ open</text>
+
+          <rect x="150" y="142" width="500" height="52" rx="7" fill="#1E5A80"></rect>
+          <text class="cx-barlabel" x="400" y="174" text-anchor="middle" fill="#ECE3D8">7,500 landed &amp; opened</text>
+          <text class="cx-rate" x="400" y="211" text-anchor="middle">↓  3%+ of contacts reply</text>
+
+          <rect x="220" y="220" width="360" height="52" rx="7" fill="#2F7FB2"></rect>
+          <text class="cx-barlabel" x="400" y="252" text-anchor="middle" fill="#ECE3D8">450 replied</text>
+          <text class="cx-rate" x="400" y="289" text-anchor="middle">↓  ~5% of replies say yes  (= 1–2 / 1,000 contacts)</text>
+
+          <rect x="280" y="298" width="240" height="52" rx="7" fill="#4FA6E0"></rect>
+          <text class="cx-barlabel" x="400" y="330" text-anchor="middle" fill="#0A0A0C">22 said "yes, let's talk"</text>
+          <text class="cx-rate" x="400" y="367" text-anchor="middle">↓  ~80% are ICP-fit &amp; show up</text>
+
+          <rect x="310" y="376" width="180" height="52" rx="7" fill="#8FC9EE"></rect>
+          <text class="cx-barlabel" x="400" y="408" text-anchor="middle" fill="#0A0A0C">~18 qualified calls</text>
+        </svg>
+
+        <p class="cx-dial">The dial → turn the contacts up, the calls scale with them. <span>Double the list ≈ double the calls.</span> Same math.</p>
+
+        <table class="cx-table">
+          <thead><tr><th>Stage</th><th>Benchmark</th><th>Result (per month)</th></tr></thead>
+          <tbody>
+            <tr><td>Contacts emailed</td><td>verified ICP list</td><td>15,000</td></tr>
+            <tr><td>Landed &amp; opened</td><td>50%+ open / delivery</td><td>7,500</td></tr>
+            <tr><td>Replied</td><td>3%+ of contacts</td><td>450</td></tr>
+            <tr><td>Said "yes, let's talk"</td><td>~5% of replies (1–2 / 1,000 contacts)</td><td>~22</td></tr>
+            <tr><td>Qualified calls (held)</td><td>~80% are ICP-fit &amp; show</td><td>~18</td></tr>
+          </tbody>
+        </table>
+
+        <figcaption class="cx-caption">
+          <strong>Illustrative funnel</strong> using industry-standard cold-email benchmarks. Open and reply rates are measured against the 15,000 contacts; the "yes" and the calls chain from there (~5% of replies is a yes; ~80% of those are ICP-fit and show up). Bar widths are schematic; the numbers are the math. Your real rates get calibrated in your first 90 days — the point is the calls come from arithmetic, not hope.
+        </figcaption>
+      </figure>
+      <p style="max-width:var(--col);margin:22px auto 0;text-align:center;color:var(--muted-dark);font-size:14px">Illustrative model, built on industry-standard cold-email benchmarks. Your real numbers get calibrated in your first 90 days. Not a guarantee — a dial.</p>
+
+      <p style="margin-top:30px">That's the whole game: get the machine healthy, then turn it up.</p>
+
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 10 · BUILT FOR AGENCIES ================= -->
+  <section class="sec sec--dark">
+    <div class="col">
+      <span class="pill">Built for agencies</span>
+      <h2>COLD EMAIL THAT ONLY WINS WHEN YOU DO.</h2>
+      <p style="margin-top:26px">There are a lot of so-called "experts" and "gurus" roaming the wild west that is cold email today.</p>
+      <p>Most are all bark, no bite. All waffle, no syrup.</p>
+      <p>'Cause marketers lie. Numbers don't.</p>
+      <p>So we won't hand you a number we made up.</p>
+      <p>We'll hand you the real ones. Agencies have paid <strong>$50,000 and gotten one lead in six months.</strong> Others were promised <strong>10–12 meetings a month — and got half of one.</strong></p>
+      <p>We built the dead opposite. You build the system once. Then you only pay when a real qualified call actually shows up.</p>
+      <p>And the proof we <em>can't</em> fake yet? We show it live — on your free audit we pull apart your real pipeline, name the exact leak or gap, and show you one angle you could run this month. You see the method, not a testimonial.</p>
+      <div class="cta-wrap">
+        <div class="hype">Hit the damn button.</div>
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+      </div>
+      <div class="trust">
+        <p>No reviews to show yet. No 4.8 stars. No "7,000 happy clients."</p>
+        <p style="margin-top:14px">Just a free audit, a straight answer, and a promise we put in writing.</p>
+        <p style="margin-top:14px">The risk sits on our side of the table — where it belongs.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 11 · YOU'RE NOT THE GUINEA PIG ================= -->
+  <section class="sec sec--light">
+    <div class="col">
+      <span class="pill">Who carries the risk</span>
+      <h2>The channel is proven. You carry none of the risk.</h2>
+      <p style="margin-top:26px">Let's be clear about what's new here — and what isn't.</p>
+      <p>Cold email isn't the experiment. It's how the biggest companies in the world book meetings. Done right, it's a proven channel. Full stop.</p>
+      <p>What's new is us. Small team. Early. Hungry.</p>
+      <p>That's not a risk to you. It's the reason you get the founder in the trenches instead of being client #400.</p>
+      <p>And you don't bet a dollar to find out. The audit is free. There's no retainer. After your first 5 calls, you only pay when a real call actually shows up.</p>
+      <p>So there's no guinea-pig seat here. Just a proven channel, run by people small enough to give a damn — with the risk sitting on <em>our</em> side of the table.</p>
+      <div class="cta-wrap">
+        <div class="hype">Hit the damn button.</div>
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 12 · THE HONEST TIMELINE ================= -->
+  <section class="sec sec--dark">
+    <div class="col">
+      <span class="eyebrow">The honest timeline</span>
+      <p>Let's kill the doubt before it starts.</p>
+      <p>Month 1 won't look like Month 3. And anyone who promises 15–20 calls in week one is lying to your face.</p>
+      <p>Here's how it really goes:</p>
+      <div class="timeline">
+        <div class="tl"><p><b>Month 1 — Build and launch.</b> Domains warming. List built. Messaging live. You won't see the full flow yet.</p></div>
+        <div class="tl"><p><b>Month 2 — The market talks back.</b> We read every reply and sharpen the campaign each week.</p></div>
+        <div class="tl"><p><b>Month 3 — It compounds.</b> This is where 15–20 qualified calls a month is the target. (A target. Not a fairy-tale guarantee.)</p></div>
+      </div>
+      <p style="margin-top:28px">And here's the part that makes it fair.</p>
+      <p>You're not paying a $4,000 retainer while you wait.</p>
+      <p>After your first 5 calls, you only pay when a real call shows up.</p>
+      <p>So the ramp isn't you paying blind. It's work you can watch compound — and you pay for calls as they land.</p>
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 13 · THE BEST TIME TO FIX THIS ================= -->
+  <section class="sec sec--light">
+    <div class="col">
+      <span class="eyebrow">Read this if you're slammed right now</span>
+      <p>Quick one for the busy owner.</p>
+      <p>Right now you've got enough work. So this feels like a "later" problem.</p>
+      <p>Here's the trap.</p>
+      <p>Most owners only think about pipeline when it's already bone dry.</p>
+      <p>By then you're in panic mode. Taking anyone who'll pay. Dropping your standards. Doing desperation outreach with the wrong energy.</p>
+      <p>Here's the truth nobody tells you:</p>
+      <p>Your best month is usually the reason your next one is slow. Because that's the month you stopped prospecting.</p>
+      <p>The feast is when you build. The famine is when you wish you had.</p>
+      <p>So the best time to fix this? The month you don't think you need to.</p>
+      <p>Like right now.</p>
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 14 · STRAIGHT TALK (the founder) ================= -->
+  <section class="sec sec--dark">
+    <div class="col">
+      <span class="eyebrow">Straight talk</span>
+      <h2>You won't be client #400.</h2>
+      <p style="margin-top:26px">Plain and honest: we're early. No wall of logos. No borrowed screenshots.</p>
+      <p>Here's what that means for <em>you</em>.</p>
+      <p>You're not an account number on an autopilot nobody's watching.</p>
+      <p>Every campaign is hands-on. So only three to five agencies run at a time.</p>
+      <p>That's not a trick. It's just the workload.</p>
+      <p class="pullquote">"Your results are my reputation."</p>
+      <p>You don't have to take any of that on faith.</p>
+      <p>Book the free audit. Judge it for yourself.</p>
+      <div class="signature">— Andrew</div>
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 15 · START HERE (the audit) ================= -->
+  <section class="sec sec--light">
+    <div class="col">
+      <span class="eyebrow">Start here</span>
+      <h2>First, we find the one thing keeping your pipeline unpredictable.</h2>
+      <p style="margin-top:26px">Not every agency should launch outbound tomorrow.</p>
+      <p>And here's the honest part — it might not even be a cold-email thing. Maybe your offer needs sharpening. Maybe your ICP is too broad. Maybe referrals are carrying everything and there's just no channel you actually control yet.</p>
+      <p>That's not because you did anything wrong. Nobody ever built you a channel you own.</p>
+      <p>And maybe you're thinking:</p>
+      <p><em>"If I can't spell out my ICP, my offer, and my close rate — no agency can fix that. They'd just be guessing with my money."</em></p>
+      <p>You're right. That's exactly what the audit is for. We work it out together — before anyone spends a dollar. <strong>We don't guess with your money.</strong></p>
+      <p>It's a free 30-minute look at where your new business really comes from — and the one thing keeping it unpredictable.</p>
+      <p>Already running outbound? We find the leak. Living on referrals and LinkedIn? We show you the gap — and tell you straight whether outbound's even right for you yet.</p>
+      <p>Nothing to prepare. You show up. I do the digging live.</p>
+      <p>If it's not a fit, I'll tell you and end the call. I'd rather do that than take you on to hit a number.</p>
+      <div class="guarantee">
+        <span class="g-label">The No-Fluff Pipeline Clarity Guarantee</span>
+        <p>By the end of the free 30 minutes, you walk away with at least one of three things — a clear read on where your clients actually come from and the one thing making it unpredictable, one outbound angle you could run this month, or one honest reason this isn't your move right now. If I can't hand you at least one, I end the call myself.</p>
+      </div>
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+        <div class="cta-sub">Free · 30 minutes · nothing to prepare.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 16 · HONEST FIT ================= -->
+  <section class="sec sec--dark">
+    <div class="col">
+      <span class="eyebrow">Honest fit</span>
+      <div class="fit-grid">
+        <div class="fit-card yes">
+          <h4>This is for you if</h4>
+          <ul>
+            <li>Your agency can genuinely deliver.</li>
+            <li>You're done riding the feast-or-famine rollercoaster.</li>
+            <li>Referrals are nice — but not a plan you can bank on.</li>
+            <li>You want an agency you own. Not one that owns you.</li>
+          </ul>
+        </div>
+        <div class="fit-card no">
+          <h4>This is NOT for you if</h4>
+          <ul>
+            <li>Your offer is still unproven.</li>
+            <li>You want to blast 10,000 generic AI emails and hope.</li>
+            <li>You care more about a full calendar than the right people on it.</li>
+            <li>You want a magic button, not a system you run with a partner.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 17 · THE GUARANTEE ================= -->
+  <section class="sec sec--light">
+    <div class="col">
+      <span class="eyebrow">Where the risk actually sits</span>
+      <h2>EVERYONE ELSE GUARANTEES RESULTS. WE BUILT THE RISK OUT INSTEAD.</h2>
+      <p style="margin-top:26px">You've heard the big one before. "We'll beat your numbers or we work for free."</p>
+      <p>Probably from the last guy. Right before he booked you zero calls and disappeared.</p>
+      <p>So we're not going to hand you another promise you've learned not to trust.</p>
+      <p>We did something better. We built the risk out of the deal itself:</p>
+      <ul class="checklist" style="margin-top:22px">
+        <li><strong>No retainer.</strong> There's no monthly bill to trap you.</li>
+        <li><strong>Your first 5 qualified calls are included</strong> in setup.</li>
+        <li><strong>After that, you only pay when a real qualified call actually shows up.</strong> Booked-but-no-show? You pay nothing.</li>
+        <li><strong>The audit is free.</strong> Walk away with a straight answer even if you never hire us.</li>
+      </ul>
+      <p style="margin-top:24px">That's not a guarantee we can wriggle out of with fine print. It <em>is</em> the model. We only win when a real call lands on your calendar.</p>
+      <p>The risk sits on our side of the table. Where it belongs.</p>
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 18 · FINAL SECTION ================= -->
+  <section class="sec sec--char" id="book">
+    <div class="col">
+      <span class="pill">Launch phase · taking 3–5 agencies</span>
+      <h2>Your calendar doesn't need more clutter. It needs better calls.</h2>
+      <p style="margin-top:26px">This is hands-on. So only a few agencies at a time — and the launch spots go first.</p>
+      <p>Or change nothing.</p>
+      <p>A year from now you're staring at the same inbox. Doing the same math. Asking where the next client comes from.</p>
+      <p>Worst case on the call: a clear read on where your clients actually come from, one workable angle, or one honest no. That's the guarantee.</p>
+      <p><strong>What happens next:</strong> Hit the button below and pick a time. Thirty minutes, nothing to prepare — we look at your pipeline, offer and ICP together.</p>
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+      </div>
+      <p style="margin-top:34px"><strong>P.S.</strong> Here's the goal: 15–20 qualified calls over your first 60–90 days, on a system where your main domain never takes the risk — and you only pay when a call actually shows. I can only build that with a handful of agencies at once. If a quiet calendar is the thing you're tired of solving alone… start the free audit while a launch spot is open.</p>
+      <p class="beat">*cue angels singing*</p>
+    </div>
+  </section>
+
+  <!-- ================= 19 · FAQ ================= -->
+  <section class="sec sec--light">
+    <div class="col">
+      <span class="eyebrow">Straight answers</span>
+      <h2>Questions you're right to ask.</h2>
+      <div class="faq">
+        <div class="faq-item">
+          <p class="faq-q">Will this burn my domain?</p>
+          <p class="faq-a">No. We send from dedicated domains built just for this — set up right with SPF, DKIM and DMARC. We keep spam complaints under the 0.10% line Google, Yahoo and Microsoft now enforce. Your main domain — the one on your website and invoices — never sends cold email. Ever.</p>
+        </div>
+        <div class="faq-item">
+          <p class="faq-q">What counts as a "qualified" call?</p>
+          <p class="faq-a">A real conversation with a company that fits your ICP, has a problem you can actually help with, and is worth your time — and <em>actually shows up.</em> Booked-but-no-show doesn't count. That's the number nobody else reports.</p>
+        </div>
+        <div class="faq-item">
+          <p class="faq-q">Won't your dashboard just look healthy while nothing lands?</p>
+          <p class="faq-a">That's the oldest trick in the category. A green dashboard hiding a 0% real reply rate. So we report <em>held</em> rates — calls that actually happened. The one number that's easy to fake is the one we lead with.</p>
+        </div>
+        <div class="faq-item">
+          <p class="faq-q">Why not just hire a salesperson?</p>
+          <p class="faq-a">Do the math. One SDR runs about <strong>$60,000 a year, takes three months to ramp, and often quits inside a year</strong> — before booking a single call. With us there's no salary and no ramp. After your first 5 calls, you only pay when a qualified call shows up.</p>
+        </div>
+        <div class="faq-item">
+          <p class="faq-q">What does it cost?</p>
+          <p class="faq-a">Fair question — and the honest answer is it varies. The right setup depends on your market, how big your list needs to be, and the volume it takes to hit your numbers — so there's no one-size price to post here. What <em>doesn't</em> change: no retainer, no maintenance fee, your first 5 qualified calls are baked into the setup, and after that you only pay when a real qualified call actually shows up. We walk through the exact numbers together on the call, once we both know it's a fit. The audit itself is free.</p>
+        </div>
+        <div class="faq-item">
+          <p class="faq-q">Is cold email even legal?</p>
+          <p class="faq-a">Done right, yes. We follow CAN-SPAM and GDPR: a real sender name, proper setup (SPF, DKIM, DMARC), one-click unsubscribe on every email, opt-outs honored right away. We respect the rules. This isn't a scraped-list blast.</p>
+        </div>
+        <div class="faq-item">
+          <p class="faq-q">Do you have case studies?</p>
+          <p class="faq-a">Straight answer: we're early. No wall of logos, no borrowed screenshots. What I <em>can</em> show you is the work itself — the exact targeting, list, setup and messaging I'd build for you, right on the audit call. Judge the method, not a testimonial.</p>
+        </div>
+      </div>
+      <div class="cta-wrap">
+        <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="sec sec--dark" style="padding-top:64px;padding-bottom:80px;border-top:1px solid var(--hair)">
+    <div class="col" style="display:flex;flex-direction:column;gap:16px;align-items:flex-start">
+      <div class="lockup">
+        <span class="badge" style="--s:38px"><span class="c">C</span>FF</span>
+        <span class="wordmark" style="font-size:14px">Cold Flow Forge</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--faint);text-transform:uppercase">Controlled Outbound for Agencies</div>
+    </div>
+  </footer>
+
+  <!-- ================= STICKY MOBILE CTA ================= -->
+  <div class="sticky-cta">
+    <a class="cta" href="https://calendly.com/andrew-coldflowforge/30min">Start My Free Audit →</a>
+  </div>
+
+</div>
