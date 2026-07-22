@@ -281,9 +281,11 @@
 #cff .hero .cta{margin-inline:auto}
 #cff .hero .badge-row{margin-bottom:34px}
 #cff .hero h1{margin:22px 0 0}
-/* one key word of the hero headline in the ember gradient (echoes the live site) */
+/* one key word of the hero headline — its own VIVID orange→gold sweep, brighter
+   than --grad, to match the live site's hot "warning"-style hero highlight */
 #cff .hero h1 .flame{
-  background:var(--grad);
+  color:#FA7A1C; /* solid orange fallback if background-clip:text is unsupported */
+  background:linear-gradient(95deg,#F14E17 0%,#FA7A1C 48%,#FBB236 100%);
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:transparent;
 }
