@@ -1,0 +1,32 @@
+{
+  "name": "lift-log",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Lift Log - a local-first, installable PWA gym session tracker with data-driven gamification.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dexie": "^4.0.8",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "jsdom": "^25.0.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.6",
+    "vite-plugin-pwa": "^0.20.5",
+    "vitest": "^2.1.1"
+  }
+}
