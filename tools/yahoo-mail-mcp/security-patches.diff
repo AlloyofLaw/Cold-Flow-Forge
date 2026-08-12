@@ -1,0 +1,368 @@
+diff --git a/render.yaml b/render.yaml
+index 481f832..efef321 100644
+--- a/render.yaml
++++ b/render.yaml
+@@ -29,6 +29,14 @@ services:
+       - key: YAHOO_APP_PASSWORD
+         sync: false  # Set this in Render Dashboard (Settings > Environment)
+ 
++      # REQUIRED. Without these the server refuses to start, because an
++      # unauthenticated public deployment exposes the entire mailbox.
++      # Generate with: openssl rand -hex 16  /  openssl rand -hex 32
++      - key: OAUTH_CLIENT_ID
++        sync: false  # Set this in Render Dashboard (Settings > Environment)
++      - key: OAUTH_CLIENT_SECRET
++        sync: false  # Set this in Render Dashboard (Settings > Environment)
++
+     # Health check configuration
+     healthCheckPath: /health
+ 
+diff --git a/server.js b/server.js
+index a1c099e..d95de3b 100644
+--- a/server.js
++++ b/server.js
+@@ -14,9 +14,12 @@ import { simpleParser } from 'mailparser';
+ import express from 'express';
+ import cors from 'cors';
+ import dotenv from 'dotenv';
++import crypto from 'crypto';
+ 
+-// Load environment variables from .env file (for local development)
+-dotenv.config();
++// Load environment variables from .env file (for local development).
++// quiet: true suppresses dotenv's startup banner, which it writes to stdout - the
++// same stream stdio transport uses for JSON-RPC framing.
++dotenv.config({ quiet: true });
+ 
+ class YahooMailMCPServer {
+     constructor() {
+@@ -35,14 +38,18 @@ class YahooMailMCPServer {
+         // Store active SSE transports (for routing messages)
+         this.transports = new Map();
+ 
+-        // Store valid OAuth access tokens (in-memory)
++        // Store valid OAuth access tokens (in-memory) as token -> expiresAt (epoch ms).
+         // In production, use Redis or a database with TTL
+-        this.validTokens = new Set();
++        this.validTokens = new Map();
+ 
+         // Store authorization codes for OAuth authorization code flow
+         // In production, use Redis with short TTL (60 seconds)
+         this.authCodes = new Map();
+ 
++        // Lifetimes for issued credentials
++        this.ACCESS_TOKEN_TTL_MS = 3600 * 1000;  // 1 hour, matches expires_in
++        this.AUTH_CODE_TTL_MS = 60 * 1000;       // 60 seconds, per OAuth 2.0 BCP
++
+         this.setupToolHandlers();
+         this.setupErrorHandling();
+     }
+@@ -370,6 +377,82 @@ class YahooMailMCPServer {
+         });
+     }
+ 
++    /**
++     * Issue an access token with a bounded lifetime, pruning any that have expired.
++     */
++    issueAccessToken(clientId) {
++        const token = crypto.randomBytes(32).toString('base64url');
++        const now = Date.now();
++
++        // Opportunistic prune so the map cannot grow without bound
++        for (const [existing, expiresAt] of this.validTokens) {
++            if (expiresAt <= now) this.validTokens.delete(existing);
++        }
++
++        this.validTokens.set(token, now + this.ACCESS_TOKEN_TTL_MS);
++        return token;
++    }
++
++    /**
++     * Check a bearer token, treating expired tokens as invalid.
++     */
++    isValidAccessToken(token) {
++        const expiresAt = this.validTokens.get(token);
++        if (!expiresAt) return false;
++
++        if (expiresAt <= Date.now()) {
++            this.validTokens.delete(token);
++            return false;
++        }
++
++        return true;
++    }
++
++    /**
++     * Constant-time string comparison so credential checks do not leak length or
++     * content through response timing.
++     */
++    safeEqual(a, b) {
++        if (typeof a !== 'string' || typeof b !== 'string') return false;
++
++        const bufA = Buffer.from(a, 'utf8');
++        const bufB = Buffer.from(b, 'utf8');
++        if (bufA.length !== bufB.length) return false;
++
++        return crypto.timingSafeEqual(bufA, bufB);
++    }
++
++    /**
++     * Validate an OAuth redirect_uri against an exact host allowlist.
++     *
++     * A substring check (e.g. uri.includes('claude.ai')) accepts hostile hosts such
++     * as https://claude.ai.attacker.example, so match parsed hostnames instead.
++     */
++    isAllowedRedirectUri(uri) {
++        if (!uri) return false;
++
++        let parsed;
++        try {
++            parsed = new URL(uri);
++        } catch (e) {
++            return false;
++        }
++
++        const host = parsed.hostname.toLowerCase();
++        const isLoopback = host === 'localhost' || host === '127.0.0.1' || host === '::1';
++
++        // Loopback redirects are for local development only and may use http
++        if (isLoopback) {
++            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
++        }
++
++        // Everything else must be HTTPS on an allowlisted Claude domain
++        if (parsed.protocol !== 'https:') return false;
++
++        const allowedHosts = ['claude.ai', 'claude.com'];
++        return allowedHosts.some(allowed => host === allowed || host.endsWith(`.${allowed}`));
++    }
++
+     /**
+      * Create IMAP connection using app-specific password (like the working test script)
+      */
+@@ -1262,9 +1345,33 @@ class YahooMailMCPServer {
+         console.error('[Server] Email configured:', !!process.env.YAHOO_EMAIL);
+         console.error('[Server] Password configured:', !!process.env.YAHOO_APP_PASSWORD);
+ 
+-        // Enable CORS for Claude.ai and remote MCP connections
++        // Refuse to expose a mailbox over HTTP without any way to authenticate callers.
++        // ALLOW_UNAUTHENTICATED=true is an explicit local-testing escape hatch only.
++        const oauthConfigured = process.env.OAUTH_CLIENT_ID && process.env.OAUTH_CLIENT_SECRET;
++        if (!oauthConfigured) {
++            if (process.env.ALLOW_UNAUTHENTICATED === 'true') {
++                console.error('[Server] WARNING: running UNAUTHENTICATED via ALLOW_UNAUTHENTICATED=true.');
++                console.error('[Server] Anyone who can reach this port can read and delete your mail.');
++                console.error('[Server] Never use this on a publicly reachable host.');
++            } else {
++                console.error('[Server] FATAL: SSE mode requires OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET.');
++                console.error('[Server] Generate them with:');
++                console.error('[Server]   OAUTH_CLIENT_ID:     openssl rand -hex 16');
++                console.error('[Server]   OAUTH_CLIENT_SECRET: openssl rand -hex 32');
++                console.error('[Server] Refusing to start an unauthenticated mail server.');
++                process.exit(1);
++            }
++        }
++
++        // Enable CORS for Claude.ai and remote MCP connections.
++        // Restricted to Claude origins and loopback: an allow-all policy combined with
++        // credentials lets any page a browser visits talk to this server.
+         app.use(cors({
+-            origin: true,  // Allow all origins (Render's proxy may modify origin headers)
++            origin: (origin, callback) => {
++                // Non-browser clients (no Origin header) are handled by bearer auth
++                if (!origin) return callback(null, true);
++                callback(null, this.isAllowedRedirectUri(origin));
++            },
+             credentials: true,
+             methods: ['GET', 'POST', 'OPTIONS'],
+             allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+@@ -1309,13 +1416,17 @@ class YahooMailMCPServer {
+                 return next();
+             }
+ 
+-            // Check if OAuth is configured
++            // Fail closed: without OAuth credentials there is no way to authenticate a
++            // caller, so refuse the request rather than serving the mailbox openly.
++            // (runSSE() also refuses to start in this state unless explicitly overridden.)
+             const oauthConfigured = process.env.OAUTH_CLIENT_ID && process.env.OAUTH_CLIENT_SECRET;
+ 
+             if (!oauthConfigured) {
+-                console.error('[Auth] WARNING: OAuth not configured - server is UNSECURED!');
+-                console.error('[Auth] Set OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET to secure your server');
+-                return next();
++                console.error('[Auth] Refusing request: OAUTH_CLIENT_ID / OAUTH_CLIENT_SECRET are not set');
++                return res.status(503).json({
++                    error: 'server_not_configured',
++                    error_description: 'OAuth is not configured on this server, so MCP endpoints are disabled'
++                });
+             }
+ 
+             // Validate OAuth Bearer token
+@@ -1330,8 +1441,8 @@ class YahooMailMCPServer {
+ 
+             const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+ 
+-            // Validate token (check if it's in our valid tokens set)
+-            if (!this.validTokens || !this.validTokens.has(token)) {
++            // Validate token (must be known AND unexpired)
++            if (!this.isValidAccessToken(token)) {
+                 console.error('[Auth] Invalid or expired access token');
+                 return res.status(401).json({
+                     error: 'invalid_token',
+@@ -1416,7 +1527,7 @@ class YahooMailMCPServer {
+             } = req.query;
+ 
+             // Validate client_id
+-            if (client_id !== clientId) {
++            if (!this.safeEqual(client_id, clientId)) {
+                 console.error('[OAuth] Invalid client_id in authorize request');
+                 return res.status(400).send('Invalid client_id');
+             }
+@@ -1427,14 +1538,20 @@ class YahooMailMCPServer {
+                 return res.status(400).send('Unsupported response_type');
+             }
+ 
+-            // Validate redirect_uri (must be Claude's callback)
+-            if (!redirect_uri || (!redirect_uri.includes('claude.ai') && !redirect_uri.includes('claude.com') && !redirect_uri.includes('localhost'))) {
++            // Validate redirect_uri against an exact host allowlist (must be Claude's callback)
++            if (!this.isAllowedRedirectUri(redirect_uri)) {
+                 console.error('[OAuth] Invalid redirect_uri:', redirect_uri);
+                 return res.status(400).send('Invalid redirect_uri');
+             }
+ 
+-            // Generate authorization code
+-            const authCode = Buffer.from(`${client_id}:${Date.now()}:${Math.random()}`).toString('base64');
++            // Require PKCE so a leaked authorization code is not replayable on its own
++            if (!code_challenge || code_challenge_method !== 'S256') {
++                console.error('[OAuth] Missing or unsupported PKCE challenge:', code_challenge_method);
++                return res.status(400).send('PKCE with code_challenge_method=S256 is required');
++            }
++
++            // Generate an unguessable authorization code
++            const authCode = crypto.randomBytes(32).toString('base64url');
+ 
+             // Store auth code with PKCE challenge (in-memory - use Redis/DB in production)
+             if (!this.authCodes) this.authCodes = new Map();
+@@ -1484,8 +1601,8 @@ class YahooMailMCPServer {
+                 reqClientSecret = req.body?.client_secret;
+             }
+ 
+-            // Validate credentials
+-            if (reqClientId !== clientId || reqClientSecret !== clientSecret) {
++            // Validate credentials (constant-time, so failures do not leak the secret)
++            if (!this.safeEqual(reqClientId, clientId) || !this.safeEqual(reqClientSecret, clientSecret)) {
+                 console.error('[OAuth] Authentication failed - invalid client credentials');
+                 return res.status(401).json({
+                     error: 'invalid_client',
+@@ -1512,32 +1629,54 @@ class YahooMailMCPServer {
+ 
+                 const authData = this.authCodes.get(code);
+ 
+-                // Validate PKCE code verifier
+-                if (authData.code_challenge) {
+-                    const crypto = await import('crypto');
+-                    const hash = crypto.createHash('sha256').update(code_verifier).digest('base64url');
+-                    if (hash !== authData.code_challenge) {
+-                        console.error('[OAuth] PKCE validation failed');
+-                        return res.status(400).json({
+-                            error: 'invalid_grant',
+-                            error_description: 'PKCE validation failed'
+-                        });
+-                    }
++                // Burn the code before any further checks so a failed exchange cannot be retried
++                this.authCodes.delete(code);
++
++                // Reject codes older than their short TTL
++                if (Date.now() - authData.created_at > this.AUTH_CODE_TTL_MS) {
++                    console.error('[OAuth] Authorization code expired');
++                    return res.status(400).json({
++                        error: 'invalid_grant',
++                        error_description: 'Authorization code has expired'
++                    });
+                 }
+ 
+-                // Delete used auth code (one-time use)
+-                this.authCodes.delete(code);
++                // The redirect_uri must match the one the code was issued for
++                if (authData.redirect_uri && !this.safeEqual(redirect_uri, authData.redirect_uri)) {
++                    console.error('[OAuth] redirect_uri mismatch on token exchange');
++                    return res.status(400).json({
++                        error: 'invalid_grant',
++                        error_description: 'redirect_uri does not match the authorization request'
++                    });
++                }
++
++                // Validate PKCE code verifier (always present - required at /oauth/authorize)
++                if (!code_verifier) {
++                    console.error('[OAuth] Missing code_verifier');
++                    return res.status(400).json({
++                        error: 'invalid_grant',
++                        error_description: 'code_verifier is required'
++                    });
++                }
++
++                const hash = crypto.createHash('sha256').update(code_verifier).digest('base64url');
++                if (!this.safeEqual(hash, authData.code_challenge)) {
++                    console.error('[OAuth] PKCE validation failed');
++                    return res.status(400).json({
++                        error: 'invalid_grant',
++                        error_description: 'PKCE validation failed'
++                    });
++                }
+ 
+                 // Generate access token
+-                const accessToken = Buffer.from(`${reqClientId}:${Date.now()}:${Math.random()}`).toString('base64');
+-                this.validTokens.add(accessToken);
++                const accessToken = this.issueAccessToken(reqClientId);
+ 
+                 console.error('[OAuth] Access token generated from authorization code');
+ 
+                 return res.json({
+                     access_token: accessToken,
+                     token_type: 'Bearer',
+-                    expires_in: 3600,
++                    expires_in: Math.floor(this.ACCESS_TOKEN_TTL_MS / 1000),
+                     scope: authData.scope || 'mcp'
+                 });
+             }
+@@ -1545,15 +1684,14 @@ class YahooMailMCPServer {
+             // Handle Client Credentials Grant
+             if (grantType === 'client_credentials') {
+                 // Generate access token
+-                const accessToken = Buffer.from(`${clientId}:${Date.now()}:${Math.random()}`).toString('base64');
+-                this.validTokens.add(accessToken);
++                const accessToken = this.issueAccessToken(clientId);
+ 
+                 console.error('[OAuth] Access token generated via client credentials');
+ 
+                 return res.json({
+                     access_token: accessToken,
+                     token_type: 'Bearer',
+-                    expires_in: 3600,
++                    expires_in: Math.floor(this.ACCESS_TOKEN_TTL_MS / 1000),
+                     scope: 'mcp'
+                 });
+             }
+@@ -1639,16 +1777,12 @@ class YahooMailMCPServer {
+                 // Let the transport handle the message
+                 transport.handlePostMessage(req, res);
+             } else {
+-                // If no session ID or transport not found, try the first available transport
+-                // (for backwards compatibility with single-connection scenario)
+-                const firstTransport = Array.from(this.transports.values())[0];
+-                if (firstTransport) {
+-                    console.error('[SSE] No session ID, using first available transport');
+-                    firstTransport.handlePostMessage(req, res);
+-                } else {
+-                    console.error('[SSE] No active transport found');
+-                    res.status(404).json({ error: 'No active SSE connection found' });
+-                }
++                // Do NOT fall back to "the first available transport": with more than one
++                // connection open that routes a caller's message into someone else's session.
++                console.error('[SSE] No matching transport for session:', sessionId);
++                res.status(404).json({
++                    error: 'No active SSE connection found for the given sessionId'
++                });
+             }
+         });
+ 
